@@ -1,0 +1,21 @@
+# Python y Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+*.log
+
+# Entorno virtual
+env/
+venv/
+ENV/
+
+# Archivos de configuración local
+*.env
+*.local
+*.swp
+
+# Editor y sistema
+.vscode/
+.DS_Store
+Thumbs.db

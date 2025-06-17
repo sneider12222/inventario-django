@@ -1,0 +1,154 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Lista de Productos{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📦 Gestión de Productos</h2>
+
+<div class="row mb-4">
+    <!-- Tarjeta: Total productos -->
+    <div class="col-md-4">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body">
+                <h5 class="card-title">Total de Productos</h5>
+                <p class="card-text display-6">{{ productos.count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta: Stock total -->
+    <div class="col-md-4">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body">
+                <h5 class="card-title">Stock Total</h5>
+                <p class="card-text display-6">{{ stock_total }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta: Gráfico -->
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5 class="card-title text-center">📊 Stock</h5>
+                <canvas id="graficoStock" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">📋 Lista de Productos</h5>
+    <div>
+    <a href="{% url 'crear_producto' %}" class="btn btn-success me-2">+ Agregar Producto</a>
+    <a href="{% url 'registrar_movimiento' %}" class="btn btn-warning me-2">Registrar Movimiento</a>
+    <a href="{% url 'exportar_productos_excel' %}" class="btn btn-outline-secondary">📤 Exportar a Excel</a>
+    <a href="{% url 'cargar_excel' %}" class="btn btn-outline-info">📥 Cargar Excel</a>
+</div>
+
+</div>
+
+<!-- Buscador -->
+<form method="get" id="filtro-form" class="mb-3 row g-2 align-items-end">
+    <div class="col-md-4">
+        <label for="q" class="form-label">Buscar nombre o categoría</label>
+        <input type="text" name="q" class="form-control" value="{{ query }}">
+    </div>
+    <div class="col-md-3">
+        <label for="categoria" class="form-label">Categoría</label>
+        <select name="categoria" class="form-select" onchange="document.getElementById('filtro-form').submit();">
+            <option value="">Todas</option>
+            {% for c in categorias %}
+                <option value="{{ c }}" {% if c == filtro_categoria %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="vendedor" class="form-label">Vendedor</label>
+        <select name="vendedor" class="form-select" onchange="document.getElementById('filtro-form').submit();">
+            <option value="">Todos</option>
+            {% for v in vendedores %}
+                <option value="{{ v }}" {% if v == filtro_vendedor %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label d-block">&nbsp;</label>
+        <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+    </div>
+</form>
+
+
+
+<!-- Tabla de productos -->
+<table class="table table-bordered table-hover shadow-sm bg-white">
+    <thead class="table-dark">
+        <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Stock</th>
+            <th>Precio</th>
+            <th>Vendedor</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for producto in productos %}
+    <tr {% if producto.stock <= 5 %}class="table-danger"{% endif %}>
+        <td>{{ producto.nombre }}</td>
+        <td>{{ producto.categoria }}</td>
+        <td>
+            {{ producto.stock }}
+            {% if producto.stock <= 5 %}
+                <span class="badge bg-danger ms-2">¡Bajo!</span>
+            {% endif %}
+        </td>
+        <td>${{ producto.precio }}</td>
+        <td>{{ producto.vendedor }}</td>
+        <td>{{ producto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+        <td>
+            {% if user.is_superuser %}
+                <a href="{% url 'editar_producto' producto.id %}" class="btn btn-sm btn-info me-1">Editar</a>
+                <a href="{% url 'eliminar_producto' producto.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+            {% else %}
+                <span class="text-muted small">Sin permisos</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="7" class="text-center text-muted">
+            No se encontraron productos con ese criterio.
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+
+</table>
+
+<!-- Script del gráfico -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('graficoStock').getContext('2d');
+    const graficoStock = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels }},
+            datasets: [{
+                label: 'Stock',
+                data: {{ stock_data }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+{% endblock %}

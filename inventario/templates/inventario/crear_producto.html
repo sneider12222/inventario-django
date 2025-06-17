@@ -1,0 +1,10 @@
+{% extends 'inventario/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Agregar Producto</h2>
+<form method="post" class="card p-4 shadow-sm">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Guardar</button>
+</form>
+{% endblock %}

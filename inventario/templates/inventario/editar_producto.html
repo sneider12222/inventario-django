@@ -1,0 +1,13 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Editar Producto{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">✏️ Editar Producto: {{ producto.nombre }}</h2>
+
+<form method="post" class="card p-4 shadow-sm bg-white">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a href="{% url 'lista_productos' %}" class="btn btn-secondary ms-2">Cancelar</a>
+</form>
+{% endblock %}

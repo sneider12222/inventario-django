@@ -1,0 +1,12 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">🔐 Iniciar sesión</h2>
+
+<form method="post" class="card p-4 shadow-sm bg-white w-50 mx-auto">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+</form>
+{% endblock %}

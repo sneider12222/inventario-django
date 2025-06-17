@@ -1,0 +1,11 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Predicción de Inventario{% endblock %}
+{% block content %}
+<h2 class="mb-4">📈 Predicción de Inventario</h2>
+
+{% if mensaje %}
+    <div class="alert alert-warning">{{ mensaje }}</div>
+{% else %}
+    <img src="data:image/png;base64,{{ grafico }}" class="img-fluid border shadow">
+{% endif %}
+{% endblock %}

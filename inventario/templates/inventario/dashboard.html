@@ -1,0 +1,72 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📊 Dashboard General</h2>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body text-center">
+                <h5>Total Productos</h5>
+                <p class="display-6">{{ total_productos }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body text-center">
+                <h5>Stock Total</h5>
+                <p class="display-6">{{ stock_total }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning shadow">
+            <div class="card-body text-center">
+                <h5>Stock Bajo</h5>
+                <p class="display-6">{{ bajo_stock }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark shadow">
+            <div class="card-body text-center">
+                <h5>Valor Inventario</h5>
+                <p class="display-6">${{ valor_total|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-body">
+        <h5 class="card-title">📦 Distribución de Productos por Categoría</h5>
+        <canvas id="categoriaChart" height="120"></canvas>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('categoriaChart').getContext('2d');
+    const categoriaChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: 'Productos por categoría',
+                data: {{ data|safe }},
+                backgroundColor: [
+                    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2',
+                    '#6c757d', '#17a2b8', '#fd7e14'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+{% endblock %}
+    

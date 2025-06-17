@@ -1,0 +1,23 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Carga Masiva{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📥 Cargar Productos desde Excel o CSV</h2>
+
+<form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Selecciona un archivo (.xlsx o .csv):</label>
+        <input type="file" name="archivo" accept=".xlsx,.csv" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Subir Archivo</button>
+</form>
+
+{% if messages %}
+    <div class="mt-3">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}
