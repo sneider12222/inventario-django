@@ -1,5 +1,8 @@
 # 🧾 Sistema de Gestión de Inventario con Django
 
+
+Michel Salvador -- Sneider Quintero
+
 Este es un sistema web profesional desarrollado en Django para gestionar productos, movimientos de inventario y visualizar métricas clave. Ideal para pequeñas y medianas empresas.
 
 ---
