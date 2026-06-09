@@ -9,20 +9,18 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
+from django.core.paginator import Paginator
 from django.utils.safestring import mark_safe
 from django import forms
-from .models import Producto, MovimientoInventario
+from .models import Producto, MovimientoInventario, Categoria, Proveedor
+from .forms import CategoriaForm, ProveedorForm, ProductoForm
 import openpyxl
 from django.http import HttpResponse
 import json
 
 # === Formularios ===
 
-class ProductoForm(forms.ModelForm):
-    class Meta:
-        model = Producto
-        fields = ['nombre', 'categoria', 'stock', 'precio', 'vendedor']
-
+# ProductoForm moved to inventario/forms.py
 class MovimientoForm(forms.ModelForm):
     class Meta:
         model = MovimientoInventario
@@ -32,15 +30,15 @@ class MovimientoForm(forms.ModelForm):
 
 @login_required
 def lista_productos(request):
-    query = request.GET.get('q')
+    q = request.GET.get('q', '')
     filtro_categoria = request.GET.get('categoria')
     filtro_vendedor = request.GET.get('vendedor')
 
     productos = Producto.objects.all()
 
-    if query:
+    if q:
         productos = productos.filter(
-            Q(nombre__icontains=query) | Q(categoria__icontains=query)
+            Q(nombre__icontains=q) | Q(categoria__icontains=q)
         )
     if filtro_categoria:
         productos = productos.filter(categoria__iexact=filtro_categoria)
@@ -61,7 +59,8 @@ def lista_productos(request):
         'stock_total': stock_total,
         'labels': mark_safe(json.dumps(labels)),
         'stock_data': mark_safe(json.dumps(stock_data)),
-        'query': query,
+        'query': q,
+        'q': q,
         'categorias': categorias,
         'vendedores': vendedores,
         'filtro_categoria': filtro_categoria,
@@ -82,9 +81,19 @@ def crear_producto(request):
 
 @login_required
 def registrar_movimiento(request):
+    productos = Producto.objects.all()
     if request.method == 'POST':
         form = MovimientoForm(request.POST)
         if form.is_valid():
+            tipo = form.cleaned_data.get('tipo')
+            producto = form.cleaned_data.get('producto')
+            cantidad = int(form.cleaned_data.get('cantidad') or 0)
+
+            # Validación de stock en servidor
+            if tipo == 'S' and cantidad > producto.stock:
+                messages.error(request, f'Stock insuficiente. Disponible: {producto.stock}')
+                return render(request, 'inventario/registrar_movimiento.html', {'form': form, 'productos': productos})
+
             movimiento = form.save()
             if movimiento.tipo == 'E':
                 movimiento.producto.stock += movimiento.cantidad
@@ -94,7 +103,7 @@ def registrar_movimiento(request):
             return redirect('lista_productos')
     else:
         form = MovimientoForm()
-    return render(request, 'inventario/registrar_movimiento.html', {'form': form})
+    return render(request, 'inventario/registrar_movimiento.html', {'form': form, 'productos': productos})
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -255,4 +264,99 @@ def predecir_stock(request):
     grafico = base64.b64encode(buffer.getvalue()).decode()
 
     return render(request, 'inventario/prediccion.html', {'grafico': grafico})
+
+
+# ======================
+# CRUD Categoría
+# ======================
+
+
+@login_required
+def lista_categorias(request):
+    categorias = Categoria.objects.all().order_by('nombre')
+    paginator = Paginator(categorias, 20)
+    page = request.GET.get('page')
+    categorias_page = paginator.get_page(page)
+    return render(request, 'inventario/lista_categorias.html', {
+        'categorias': categorias_page
+    })
+
+
+@login_required
+def crear_categoria(request):
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_categorias')
+    else:
+        form = CategoriaForm()
+    return render(request, 'inventario/form_categoria.html', {'form': form})
+
+
+@login_required
+def editar_categoria(request, pk):
+    categoria = get_object_or_404(Categoria, pk=pk)
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_categorias')
+    else:
+        form = CategoriaForm(instance=categoria)
+    return render(request, 'inventario/form_categoria.html', {'form': form, 'categoria': categoria})
+
+
+@login_required
+def eliminar_categoria(request, pk):
+    categoria = get_object_or_404(Categoria, pk=pk)
+    if request.method == 'POST':
+        categoria.delete()
+        return redirect('lista_categorias')
+    return render(request, 'inventario/confirmar_eliminar_categoria.html', {'categoria': categoria})
+
+
+# ======================
+# CRUD Proveedor
+# ======================
+
+
+@login_required
+def lista_proveedores(request):
+    proveedores = Proveedor.objects.all().order_by('nombre')
+    return render(request, 'inventario/lista_proveedores.html', {'proveedores': proveedores})
+
+
+@login_required
+def crear_proveedor(request):
+    if request.method == 'POST':
+        form = ProveedorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_proveedores')
+    else:
+        form = ProveedorForm()
+    return render(request, 'inventario/form_proveedor.html', {'form': form})
+
+
+@login_required
+def editar_proveedor(request, pk):
+    proveedor = get_object_or_404(Proveedor, pk=pk)
+    if request.method == 'POST':
+        form = ProveedorForm(request.POST, instance=proveedor)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_proveedores')
+    else:
+        form = ProveedorForm(instance=proveedor)
+    return render(request, 'inventario/form_proveedor.html', {'form': form, 'proveedor': proveedor})
+
+
+@login_required
+def eliminar_proveedor(request, pk):
+    proveedor = get_object_or_404(Proveedor, pk=pk)
+    if request.method == 'POST':
+        proveedor.delete()
+        return redirect('lista_proveedores')
+    return render(request, 'inventario/confirmar_eliminar_proveedor.html', {'proveedor': proveedor})
 

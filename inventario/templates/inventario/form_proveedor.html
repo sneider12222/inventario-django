@@ -1,0 +1,11 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Formulario Proveedor{% endblock %}
+{% block content %}
+<h2 class="mb-4">{% if proveedor %}Editar{% else %}Nuevo{% endif %} Proveedor</h2>
+<form method="post" class="card p-4 bg-white shadow-sm">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{% url 'lista_proveedores' %}" class="btn btn-secondary ms-2">Volver</a>
+</form>
+{% endblock %}

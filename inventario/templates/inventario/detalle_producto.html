@@ -1,0 +1,13 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Detalle Producto{% endblock %}
+{% block content %}
+<h2 class="mb-4">Detalle: {{ producto.nombre }}</h2>
+<div class="card p-3 mb-3">
+    <p><strong>Categoría:</strong> {{ producto.categoria.nombre|default:"Sin categoría" }}</p>
+    <p><strong>Vendedor:</strong> {{ producto.vendedor.nombre|default:"Sin proveedor" }}</p>
+    <p><strong>Stock:</strong> {{ producto.stock }}</p>
+    <p><strong>Precio:</strong> ${{ producto.precio }}</p>
+    <p><strong>Fecha creación:</strong> {{ producto.fecha_creacion|date:"d/m/Y H:i" }}</p>
+</div>
+<a href="{% url 'lista_productos' %}" class="btn btn-secondary">Volver</a>
+{% endblock %}

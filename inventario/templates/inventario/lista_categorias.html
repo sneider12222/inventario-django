@@ -1,0 +1,203 @@
+{% extends 'inventario/base.html' %}
+{% block page_title %}Categorías{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'crear_categoria' %}" class="btn-primary-custom">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nueva categoría
+  </a>
+{% endblock %}
+
+{% block extra_css %}
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+  }
+
+  .cat-card {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .cat-card:hover {
+    border-color: rgba(0,0,0,0.13);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+
+  .cat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cat-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cat-icon svg {
+    width: 17px; height: 17px;
+    stroke: var(--accent); fill: none; stroke-width: 1.75;
+  }
+  .cat-name {
+    font-size: 14px; font-weight: 700; color: var(--ink);
+    line-height: 1.2;
+  }
+  .cat-count {
+    font-size: 11px; color: var(--ink3);
+    font-family: var(--mono); margin-top: 2px;
+  }
+
+  .cat-desc {
+    font-size: 12px; color: var(--ink2);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+    min-height: 36px;
+  }
+  .cat-desc.empty {
+    color: var(--ink3);
+    font-style: italic;
+  }
+
+  .cat-card-footer {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .cat-btn-edit {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 7px 0;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 12px; font-weight: 500; font-family: var(--font);
+    color: var(--ink2); background: transparent;
+    text-decoration: none; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .cat-btn-edit:hover { background: var(--surf2); border-color: rgba(0,0,0,0.12); color: var(--ink); }
+  .cat-btn-edit svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .cat-btn-del {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 7px 0;
+    border: 1px solid transparent; border-radius: var(--radius);
+    font-size: 12px; font-weight: 500; font-family: var(--font);
+    color: var(--danger); background: var(--danger-light);
+    text-decoration: none; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .cat-btn-del:hover { opacity: 0.8; }
+  .cat-btn-del svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .cat-card-new {
+    background: transparent;
+    border: 1.5px dashed var(--surf3);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px; cursor: pointer;
+    text-decoration: none;
+    min-height: 160px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cat-card-new:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .cat-card-new svg {
+    width: 28px; height: 28px;
+    stroke: var(--ink3); fill: none; stroke-width: 1.5;
+    transition: stroke 0.15s;
+  }
+  .cat-card-new:hover svg { stroke: var(--accent); }
+  .cat-card-new span {
+    font-size: 13px; font-weight: 600;
+    color: var(--ink3); transition: color 0.15s;
+  }
+  .cat-card-new:hover span { color: var(--accent); }
+
+  .empty-state {
+    text-align: center; padding: 60px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .empty-state svg { width: 48px; height: 48px; stroke: var(--ink3); fill: none; stroke-width: 1.25; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .empty-sub { font-size: 13px; color: var(--ink3); }
+
+{% endblock %}
+
+{% block content %}
+
+{% if categorias %}
+<div class="cat-grid">
+  {% for cat in categorias %}
+  <div class="cat-card">
+    <div class="cat-card-header">
+      <div class="cat-icon">
+        <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </div>
+      <div>
+        <div class="cat-name">{{ cat.nombre }}</div>
+        <div class="cat-count">
+          {{ cat.producto_set.count }} producto{{ cat.producto_set.count|pluralize }}
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-desc {% if not cat.descripcion %}empty{% endif %}">
+      {% if cat.descripcion %}
+        {{ cat.descripcion }}
+      {% else %}
+        Sin descripción
+      {% endif %}
+    </div>
+
+    <div class="cat-card-footer">
+      <a href="{% url 'editar_categoria' cat.pk %}" class="cat-btn-edit">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Editar
+      </a>
+      <a href="{% url 'eliminar_categoria' cat.pk %}" class="cat-btn-del">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Eliminar
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+
+  <a href="{% url 'crear_categoria' %}" class="cat-card-new">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>Nueva categoría</span>
+  </a>
+</div>
+
+{% else %}
+<div class="card-base">
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    <div class="empty-title">No hay categorías registradas</div>
+    <div class="empty-sub">Crea la primera categoría para organizar tus productos</div>
+    <a href="{% url 'crear_categoria' %}" class="btn-primary-custom" style="margin-top:4px">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Crear categoría
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

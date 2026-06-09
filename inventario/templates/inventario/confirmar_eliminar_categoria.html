@@ -1,0 +1,11 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Confirmar eliminación{% endblock %}
+{% block content %}
+<h2 class="mb-4">Eliminar Categoría</h2>
+<div class="alert alert-warning">¿Eliminar la categoría "{{ categoria.nombre }}"? Esta acción no se puede deshacer.</div>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirmar eliminación</button>
+    <a href="{% url 'lista_categorias' %}" class="btn btn-secondary ms-2">Cancelar</a>
+</form>
+{% endblock %}

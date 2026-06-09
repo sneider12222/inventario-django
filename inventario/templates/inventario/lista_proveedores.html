@@ -1,0 +1,161 @@
+{% extends 'inventario/base.html' %}
+{% block page_title %}Proveedores{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'crear_proveedor' %}" class="btn-primary-custom">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nuevo proveedor
+  </a>
+{% endblock %}
+
+{% block extra_css %}
+
+  .prov-table { width: 100%; border-collapse: collapse; }
+  .prov-table thead th {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink3); padding: 10px 16px;
+    background: var(--surf2); border-bottom: 1px solid var(--border);
+    text-align: left; white-space: nowrap;
+  }
+  .prov-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .prov-table tbody tr:last-child { border-bottom: none; }
+  .prov-table tbody tr:hover { background: #fafbfc; }
+  .prov-table tbody td { padding: 13px 16px; vertical-align: middle; }
+
+  .prov-identity { display: flex; align-items: center; gap: 10px; }
+  .prov-avatar {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    color: var(--accent); flex-shrink: 0;
+    font-family: var(--mono);
+  }
+  .prov-name    { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .prov-contact { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+
+  .prov-phone {
+    font-family: var(--mono); font-size: 12px; color: var(--ink2);
+  }
+  .prov-email {
+    font-size: 12px; color: var(--accent);
+    text-decoration: none;
+  }
+  .prov-email:hover { text-decoration: underline; }
+
+  .prod-badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    background: var(--accent-light); color: var(--accent);
+    font-family: var(--mono);
+  }
+
+  .action-wrap { display: flex; align-items: center; gap: 4px; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; background: transparent;
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+    color: var(--ink2);
+  }
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.75; }
+  .icon-btn:hover { background: var(--surf3); border-color: var(--border); }
+  .icon-btn.del:hover {
+    background: var(--danger-light);
+    border-color: rgba(185,28,28,0.15);
+    color: var(--danger);
+  }
+
+  .empty-state {
+    text-align: center; padding: 60px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .empty-state svg { width: 48px; height: 48px; stroke: var(--ink3); fill: none; stroke-width: 1.25; }
+  .empty-title { font-size: 15px; font-weight: 600; }
+  .empty-sub   { font-size: 13px; color: var(--ink3); }
+
+{% endblock %}
+
+{% block content %}
+
+<div class="card-base">
+  {% if proveedores %}
+  <table class="prov-table">
+    <thead>
+      <tr>
+        <th>Proveedor</th>
+        <th>Teléfono</th>
+        <th>Email</th>
+        <th>Productos</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for prov in proveedores %}
+      <tr>
+        <td>
+          <div class="prov-identity">
+            <div class="prov-avatar">
+              {{ prov.nombre|upper|slice:":2" }}
+            </div>
+            <div>
+              <div class="prov-name">{{ prov.nombre }}</div>
+              {% if prov.contacto %}
+              <div class="prov-contact">{{ prov.contacto }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </td>
+        <td>
+          {% if prov.telefono %}
+            <span class="prov-phone">{{ prov.telefono }}</span>
+          {% else %}
+            <span style="color:var(--ink3); font-size:12px">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if prov.email %}
+            <a href="mailto:{{ prov.email }}" class="prov-email">{{ prov.email }}</a>
+          {% else %}
+            <span style="color:var(--ink3); font-size:12px">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="prod-badge">
+            {{ prov.producto_set.count }} prod.
+          </span>
+        </td>
+        <td>
+          <div class="action-wrap">
+            <a href="{% url 'editar_proveedor' prov.pk %}" class="icon-btn" title="Editar">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>
+            <a href="{% url 'eliminar_proveedor' prov.pk %}" class="icon-btn del" title="Eliminar">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <div class="empty-title">No hay proveedores registrados</div>
+    <div class="empty-sub">Crea el primer proveedor para asignarlo a tus productos</div>
+    <a href="{% url 'crear_proveedor' %}" class="btn-primary-custom" style="margin-top:4px">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Crear proveedor
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -12,4 +12,15 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('cargar/', views.cargar_productos_excel, name='cargar_excel'),
     path('predecir/', views.predecir_stock, name='predecir_stock'),
+    # Categorias
+    path('categorias/', views.lista_categorias, name='lista_categorias'),
+    path('categorias/nueva/', views.crear_categoria, name='crear_categoria'),
+    path('categorias/<int:pk>/editar/', views.editar_categoria, name='editar_categoria'),
+    path('categorias/<int:pk>/eliminar/', views.eliminar_categoria, name='eliminar_categoria'),
+
+    # Proveedores
+    path('proveedores/', views.lista_proveedores, name='lista_proveedores'),
+    path('proveedores/nuevo/', views.crear_proveedor, name='crear_proveedor'),
+    path('proveedores/<int:pk>/editar/', views.editar_proveedor, name='editar_proveedor'),
+    path('proveedores/<int:pk>/eliminar/', views.eliminar_proveedor, name='eliminar_proveedor'),
 ]

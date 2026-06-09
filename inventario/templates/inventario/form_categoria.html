@@ -1,0 +1,11 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Formulario Categoría{% endblock %}
+{% block content %}
+<h2 class="mb-4">{% if categoria %}Editar{% else %}Nueva{% endif %} Categoría</h2>
+<form method="post" class="card p-4 bg-white shadow-sm">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{% url 'lista_categorias' %}" class="btn btn-secondary ms-2">Volver</a>
+</form>
+{% endblock %}

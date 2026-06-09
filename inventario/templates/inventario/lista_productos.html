@@ -1,154 +1,256 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Lista de Productos{% endblock %}
+
+{% block page_title %}Productos{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'exportar_productos_excel' %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </a>
+  <a href="{% url 'crear_producto' %}" class="btn-primary-custom">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nuevo producto
+  </a>
+{% endblock %}
+
+{% block extra_css %}
+  .filters-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .search-input-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 7px 12px;
+    flex: 1; min-width: 200px; max-width: 320px;
+  }
+  .search-input-wrap svg { width: 15px; height: 15px; stroke: var(--ink3); fill: none; stroke-width: 2; flex-shrink: 0; }
+  .search-input-wrap input { border: none; background: transparent; font-size: 13px; font-family: var(--font); color: var(--ink); outline: none; width: 100%; }
+  .filter-select {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 12px; font-size: 13px; font-family: var(--font);
+    background: var(--surf); color: var(--ink); cursor: pointer; outline: none;
+  }
+  .filter-select:focus { border-color: var(--accent); }
+
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .stat-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .stat-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.75; }
+  .stat-icon.blue { background: var(--accent-light); color: var(--accent); }
+  .stat-icon.green { background: var(--ok-light); color: var(--ok); }
+  .stat-icon.warn { background: var(--warn-light); color: var(--warn); }
+  .stat-value { font-size: 22px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--ink3); margin-top: 3px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table thead th {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ink3);
+    padding: 10px 16px; background: var(--surf2);
+    border-bottom: 1px solid var(--border); text-align: left;
+    white-space: nowrap;
+  }
+  .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .data-table tbody tr:last-child { border-bottom: none; }
+  .data-table tbody tr:hover { background: #fafbfc; }
+  .data-table tbody td { padding: 12px 16px; vertical-align: middle; }
+
+  .prod-name  { font-weight: 600; font-size: 13px; color: var(--ink); }
+  .prod-date  { font-size: 11px; font-family: var(--mono); color: var(--ink3); margin-top: 2px; }
+
+  .chip {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .chip-blue   { background: #EFF6FF; color: #1D4ED8; }
+  .chip-green  { background: #F0FDF4; color: #15803D; }
+  .chip-purple { background: #F5F3FF; color: #6D28D9; }
+  .chip-amber  { background: #FFFBEB; color: #B45309; }
+  .chip-rose   { background: #FFF1F2; color: #BE123C; }
+  .chip-teal   { background: #F0FDFA; color: #0F766E; }
+  .chip-gray   { background: var(--surf3); color: var(--ink2); }
+
+  .price-cell { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+
+  .stock-wrap { display: flex; align-items: center; gap: 8px; }
+  .stock-bar  { width: 52px; height: 4px; background: var(--surf3); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+  .stock-fill { height: 100%; border-radius: 2px; }
+  .fill-ok   { background: var(--ok); }
+  .fill-warn { background: var(--warn); }
+  .fill-out  { background: var(--danger); }
+  .stock-num { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+
+  .action-wrap { display: flex; align-items: center; gap: 4px; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; background: transparent;
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+    color: var(--ink2);
+  }
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.75; }
+  .icon-btn:hover { background: var(--surf3); border-color: var(--border); }
+  .icon-btn.del:hover { background: var(--danger-light); border-color: rgba(185,28,28,0.15); color: var(--danger); }
+
+  .empty-state {
+    text-align: center; padding: 56px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .empty-state svg { width: 48px; height: 48px; stroke: var(--ink3); fill: none; stroke-width: 1.25; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .empty-sub   { font-size: 13px; color: var(--ink3); }
+{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">📦 Gestión de Productos</h2>
 
-<div class="row mb-4">
-    <!-- Tarjeta: Total productos -->
-    <div class="col-md-4">
-        <div class="card text-white bg-primary shadow">
-            <div class="card-body">
-                <h5 class="card-title">Total de Productos</h5>
-                <p class="card-text display-6">{{ productos.count }}</p>
-            </div>
-        </div>
+<!-- Stats row -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
     </div>
-
-    <!-- Tarjeta: Stock total -->
-    <div class="col-md-4">
-        <div class="card text-white bg-success shadow">
-            <div class="card-body">
-                <h5 class="card-title">Stock Total</h5>
-                <p class="card-text display-6">{{ stock_total }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tarjeta: Gráfico -->
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body">
-                <h5 class="card-title text-center">📊 Stock</h5>
-                <canvas id="graficoStock" height="150"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Botones de acción -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">📋 Lista de Productos</h5>
     <div>
-    <a href="{% url 'crear_producto' %}" class="btn btn-success me-2">+ Agregar Producto</a>
-    <a href="{% url 'registrar_movimiento' %}" class="btn btn-warning me-2">Registrar Movimiento</a>
-    <a href="{% url 'exportar_productos_excel' %}" class="btn btn-outline-secondary">📤 Exportar a Excel</a>
-    <a href="{% url 'cargar_excel' %}" class="btn btn-outline-info">📥 Cargar Excel</a>
+      <div class="stat-value">{{ productos.count }}</div>
+      <div class="stat-label">Total productos</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </div>
+    <div>
+      <div class="stat-value">{{ stock_total|default:0 }}</div>
+      <div class="stat-label">Stock total</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon warn">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div>
+      <div class="stat-value">{{ bajo_stock|default:0 }}</div>
+      <div class="stat-label">Stock bajo (≤5)</div>
+    </div>
+  </div>
 </div>
 
-</div>
-
-<!-- Buscador -->
-<form method="get" id="filtro-form" class="mb-3 row g-2 align-items-end">
-    <div class="col-md-4">
-        <label for="q" class="form-label">Buscar nombre o categoría</label>
-        <input type="text" name="q" class="form-control" value="{{ query }}">
-    </div>
-    <div class="col-md-3">
-        <label for="categoria" class="form-label">Categoría</label>
-        <select name="categoria" class="form-select" onchange="document.getElementById('filtro-form').submit();">
-            <option value="">Todas</option>
-            {% for c in categorias %}
-                <option value="{{ c }}" {% if c == filtro_categoria %}selected{% endif %}>{{ c }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-md-3">
-        <label for="vendedor" class="form-label">Vendedor</label>
-        <select name="vendedor" class="form-select" onchange="document.getElementById('filtro-form').submit();">
-            <option value="">Todos</option>
-            {% for v in vendedores %}
-                <option value="{{ v }}" {% if v == filtro_vendedor %}selected{% endif %}>{{ v }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-md-2">
-        <label class="form-label d-block">&nbsp;</label>
-        <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
-    </div>
+<!-- Filtros -->
+<form method="get" class="filters-bar">
+  <div class="search-input-wrap">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar producto...">
+  </div>
+  <select name="categoria" class="filter-select">
+    <option value="">Todas las categorías</option>
+    {% for cat in categorias %}
+      <option value="{{ cat }}" {% if request.GET.categoria == cat|stringformat:"s" %}selected{% endif %}>
+        {{ cat }}
+      </option>
+    {% endfor %}
+  </select>
+  <select name="vendedor" class="filter-select">
+    <option value="">Todos los proveedores</option>
+    {% for prov in vendedores %}
+      <option value="{{ prov }}" {% if request.GET.vendedor == prov|stringformat:"s" %}selected{% endif %}>
+        {{ prov }}
+      </option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-ghost-custom">Filtrar</button>
 </form>
 
-
-
-<!-- Tabla de productos -->
-<table class="table table-bordered table-hover shadow-sm bg-white">
-    <thead class="table-dark">
-        <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Stock</th>
-            <th>Precio</th>
-            <th>Vendedor</th>
-            <th>Fecha</th>
-            <th>Acciones</th>
-        </tr>
+<!-- Tabla -->
+<div class="card-base">
+  {% if productos %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Categoría</th>
+        <th>Proveedor</th>
+        <th style="text-align:right">Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
     </thead>
     <tbody>
-    {% for producto in productos %}
-    <tr {% if producto.stock <= 5 %}class="table-danger"{% endif %}>
-        <td>{{ producto.nombre }}</td>
-        <td>{{ producto.categoria }}</td>
+      {% for producto in productos %}
+      <tr>
         <td>
-            {{ producto.stock }}
-            {% if producto.stock <= 5 %}
-                <span class="badge bg-danger ms-2">¡Bajo!</span>
-            {% endif %}
+          <div class="prod-name">{{ producto.nombre }}</div>
+          <div class="prod-date">{{ producto.fecha_creacion|date:"d/m/Y" }}</div>
         </td>
-        <td>${{ producto.precio }}</td>
-        <td>{{ producto.vendedor }}</td>
-        <td>{{ producto.fecha_creacion|date:"d/m/Y H:i" }}</td>
         <td>
-            {% if user.is_superuser %}
-                <a href="{% url 'editar_producto' producto.id %}" class="btn btn-sm btn-info me-1">Editar</a>
-                <a href="{% url 'eliminar_producto' producto.id %}" class="btn btn-sm btn-danger">Eliminar</a>
-            {% else %}
-                <span class="text-muted small">Sin permisos</span>
-            {% endif %}
+          <span class="chip chip-blue">
+            {{ producto.categoria.nombre|default:"Sin categoría" }}
+          </span>
         </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="7" class="text-center text-muted">
-            No se encontraron productos con ese criterio.
+        <td style="color:var(--ink2); font-size:13px">
+          {{ producto.vendedor.nombre|default:"Sin proveedor" }}
         </td>
-    </tr>
-    {% endfor %}
-</tbody>
+        <td style="text-align:right">
+          <span class="price-cell">${{ producto.precio }}</span>
+        </td>
+        <td>
+          <div class="stock-wrap">
+            <div class="stock-bar">
+              {% if producto.stock == 0 %}
+                <div class="stock-fill fill-out" style="width:100%"></div>
+              {% elif producto.stock <= 5 %}
+                <div class="stock-fill fill-warn" style="width:30%"></div>
+              {% else %}
+                <div class="stock-fill fill-ok" style="width:75%"></div>
+              {% endif %}
+            </div>
+            <span class="stock-num 
+              {% if producto.stock == 0 %}
+                " style="color:var(--danger)">
+              {% elif producto.stock <= 5 %}
+                " style="color:var(--warn)">
+              {% else %}
+                ">
+              {% endif %}
+              {{ producto.stock }}
+            </span>
+          </div>
+        </td>
+        <td>
+          <div class="action-wrap">
+            <a href="{% url 'editar_producto' producto.id %}" class="icon-btn" title="Editar">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>
+            <a href="{% url 'eliminar_producto' producto.id %}" class="icon-btn del" title="Eliminar">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    <div class="empty-title">No hay productos registrados</div>
+    <div class="empty-sub">Crea el primer producto para comenzar</div>
+    <a href="{% url 'crear_producto' %}" class="btn-primary-custom" style="margin-top:4px">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Agregar producto
+    </a>
+  </div>
+  {% endif %}
+</div>
 
-
-</table>
-
-<!-- Script del gráfico -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('graficoStock').getContext('2d');
-    const graficoStock = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: {{ labels }},
-            datasets: [{
-                label: 'Stock',
-                data: {{ stock_data }},
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-</script>
 {% endblock %}

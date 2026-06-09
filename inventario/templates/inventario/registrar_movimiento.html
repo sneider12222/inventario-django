@@ -5,7 +5,50 @@
 
 <form method="post" class="card p-4 shadow-sm bg-white">
     {% csrf_token %}
-    {{ form.as_p }}
+    <div class="mb-3">
+        <label for="id_producto" class="form-label">Producto</label>
+        <select name="producto" id="id_producto" class="form-select">
+            <option value="">---------</option>
+            {% for producto in productos %}
+                <option value="{{ producto.id }}" data-stock="{{ producto.stock }}" {% if form.producto.value|stringformat:"s" == producto.id|stringformat:"s" %}selected{% endif %}>{{ producto.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        {{ form.cantidad.label_tag }}
+        {{ form.cantidad }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.tipo.label_tag }}
+        {{ form.tipo }}
+    </div>
+
     <button type="submit" class="btn btn-primary">Guardar Movimiento</button>
 </form>
+
+<script>
+const selectProducto = document.getElementById('id_producto');
+const inputCantidad = document.getElementById('id_cantidad');
+const tipoMovimiento = document.getElementById('id_tipo');
+
+function validarStock() {
+    const opcionSeleccionada = selectProducto.options[selectProducto.selectedIndex];
+    const stockDisponible = parseInt(opcionSeleccionada.getAttribute('data-stock') || 0);
+    const cantidad = parseInt(inputCantidad.value || 0);
+    const tipo = tipoMovimiento ? tipoMovimiento.value : 'S';
+    
+    if (tipo === 'S' && cantidad > stockDisponible) {
+        inputCantidad.setCustomValidity(`Stock insuficiente. Máximo: ${stockDisponible}`);
+        inputCantidad.reportValidity();
+    } else {
+        inputCantidad.setCustomValidity('');
+    }
+}
+
+if (selectProducto) selectProducto.addEventListener('change', validarStock);
+if (inputCantidad) inputCantidad.addEventListener('input', validarStock);
+if (tipoMovimiento) tipoMovimiento.addEventListener('change', validarStock);
+</script>
 {% endblock %}
