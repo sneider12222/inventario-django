@@ -1,45 +1,53 @@
-# 🧾 Sistema de Gestión de Inventario con Django
+# Sistema de Control de Stock con Django
 
+Aplicacion web para gestionar productos, entradas, salidas, alertas de reposicion, historial de movimientos, importacion/exportacion en Excel y dashboard operativo.
 
-Michel Salvador -- Sneider Quintero
+## Funcionalidades
 
-Este es un sistema web profesional desarrollado en Django para gestionar productos, movimientos de inventario y visualizar métricas clave. Ideal para pequeñas y medianas empresas.
+- Productos con SKU, categoria, proveedor, unidad, ubicacion, precio, estado activo y stock minimo.
+- Stock actualizado desde movimientos de entrada/salida.
+- Bloqueo de salidas cuando no hay stock suficiente.
+- Alertas de stock bajo y productos sin stock.
+- Dashboard con valor total, productos criticos, ultimos movimientos y grafica de entradas vs salidas.
+- Historial con filtros por producto, tipo y fechas.
+- Usuario y motivo registrados en cada movimiento.
+- Importacion CSV/XLSX con validacion, vista previa y confirmacion.
+- Exportacion de productos, movimientos y productos que requieren reposicion.
+- Roles sugeridos por grupos de Django:
+  - `Administrador`: crea, edita, elimina, importa y administra catalogos.
+  - `Operador`: registra entradas y salidas.
+  - `Consulta`: revisa productos, dashboard, historial y reportes.
 
----
+## Instalacion
 
-## 🚀 Funcionalidades Principales
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
 
-✅ CRUD de productos: nombre, categoría, precio, stock y vendedor  
-✅ Registro de movimientos (entradas/salidas)  
-✅ Dashboard visual con métricas y gráficas  
-✅ Filtros avanzados por nombre, categoría y vendedor  
-✅ Predicción de inventario con Machine Learning (Regresión Lineal)  
-✅ Carga masiva desde archivos `.xlsx` o `.csv`  
-✅ Exportación de productos a Excel  
-✅ Control de acceso (solo superusuarios pueden editar o eliminar)  
-✅ Autenticación de usuarios: login y logout
+Crear un archivo `.env`:
 
----
+```env
+SECRET_KEY=tu-clave-local
+DEBUG=True
+```
 
-## 🧠 Tecnologías Usadas
+## Importacion masiva
 
-- **Python 3.11**
-- **Django 5.2**
-- **SQLite3**
-- **Bootstrap 5**
-- **Chart.js**
-- **Pandas**
-- **Scikit-learn**
-- **OpenPyXL**
+Columnas recomendadas:
 
----
+```text
+sku,nombre,categoria,proveedor,stock,stock_minimo,precio,unidad,ubicacion,activo
+```
 
-## 📊 Dashboard
+La unica columna obligatoria es `nombre`. Si `categoria` o `proveedor` no existen, se crean automaticamente. Si el archivo trae `stock`, se registra como movimiento de entrada con motivo "Carga inicial desde Excel/CSV".
 
-El sistema incluye un dashboard que muestra:
+## Pruebas
 
-- Total de productos
-- Stock total
-- Valor total del inventario
-- Productos con bajo stock
-- Gráfico circular por categoría
+```powershell
+python manage.py test
+```

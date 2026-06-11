@@ -1,0 +1,3 @@
+sku,nombre,stock,stock_minimo,precio,unidad,ubicacion,activo
+DUP-1,Primero,1,2,100,unidad,Bodega,si
+DUP-1,Segundo,1,2,100,unidad,Bodega,si

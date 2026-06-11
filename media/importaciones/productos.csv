@@ -1,0 +1,2 @@
+sku,nombre,categoria,proveedor,stock,stock_minimo,precio,unidad,ubicacion_categoria,ubicacion,activo
+IMP-001,Importado,General,Proveedor A,6,2,1500,unidad,bodega,Bodega 1,si

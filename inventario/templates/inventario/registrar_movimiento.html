@@ -1,54 +1,123 @@
 {% extends 'inventario/base.html' %}
 
+{% block title %}Registrar movimiento{% endblock %}
+{% block page_title %}Registrar movimiento{% endblock %}
+
+{% block extra_css %}
+  .form-card {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    max-width: 680px;
+    padding: 26px 30px;
+  }
+  .form-grid { display: grid; gap: 18px; }
+  .form-group label {
+    color: var(--ink3);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .form-group input, .form-group select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 9px 12px;
+    width: 100%;
+  }
+  .stock-hint {
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 8px;
+    padding: 8px 10px;
+  }
+  .errorlist { color: var(--danger); font-size: 12px; list-style: none; margin: 4px 0 0; padding: 0; }
+  .form-actions { display: flex; gap: 10px; margin-top: 22px; }
+{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">📥 Registrar Movimiento de Inventario</h2>
-
-<form method="post" class="card p-4 shadow-sm bg-white">
+<section class="form-card">
+  <form method="post">
     {% csrf_token %}
-    <div class="mb-3">
-        <label for="id_producto" class="form-label">Producto</label>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="{{ form.producto.id_for_label }}">Producto</label>
         <select name="producto" id="id_producto" class="form-select">
-            <option value="">---------</option>
-            {% for producto in productos %}
-                <option value="{{ producto.id }}" data-stock="{{ producto.stock }}" {% if form.producto.value|stringformat:"s" == producto.id|stringformat:"s" %}selected{% endif %}>{{ producto.nombre }}</option>
-            {% endfor %}
+          <option value="">---------</option>
+          {% for producto in productos %}
+            <option value="{{ producto.id }}" data-stock="{{ producto.stock }}" {% if form.producto.value|stringformat:"s" == producto.id|stringformat:"s" %}selected{% endif %}>
+              {{ producto.nombre }}{% if producto.sku %} · {{ producto.sku }}{% endif %}
+            </option>
+          {% endfor %}
         </select>
-    </div>
+        <div class="stock-hint" id="stockHint">Selecciona un producto para ver el stock disponible.</div>
+        {% if form.producto.errors %}<ul class="errorlist">{% for e in form.producto.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
 
-    <div class="mb-3">
-        {{ form.cantidad.label_tag }}
-        {{ form.cantidad }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.tipo.label_tag }}
+      <div class="form-group">
+        <label for="{{ form.tipo.id_for_label }}">Tipo</label>
         {{ form.tipo }}
+        {% if form.tipo.errors %}<ul class="errorlist">{% for e in form.tipo.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.cantidad.id_for_label }}">Cantidad</label>
+        {{ form.cantidad }}
+        {% if form.cantidad.errors %}<ul class="errorlist">{% for e in form.cantidad.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.motivo.id_for_label }}">Motivo</label>
+        {{ form.motivo }}
+        {% if form.motivo.errors %}<ul class="errorlist">{% for e in form.motivo.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar Movimiento</button>
-</form>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary-custom">Guardar movimiento</button>
+      <a href="{% url 'historial_movimientos' %}" class="btn-ghost-custom">Ver historial</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-const selectProducto = document.getElementById('id_producto');
-const inputCantidad = document.getElementById('id_cantidad');
-const tipoMovimiento = document.getElementById('id_tipo');
+  const selectProducto = document.getElementById('id_producto');
+  const inputCantidad = document.getElementById('id_cantidad');
+  const tipoMovimiento = document.getElementById('id_tipo');
+  const stockHint = document.getElementById('stockHint');
 
-function validarStock() {
-    const opcionSeleccionada = selectProducto.options[selectProducto.selectedIndex];
-    const stockDisponible = parseInt(opcionSeleccionada.getAttribute('data-stock') || 0);
+  function validarStock() {
+    const opcion = selectProducto.options[selectProducto.selectedIndex];
+    const stock = parseInt(opcion.getAttribute('data-stock') || 0);
     const cantidad = parseInt(inputCantidad.value || 0);
     const tipo = tipoMovimiento ? tipoMovimiento.value : 'S';
-    
-    if (tipo === 'S' && cantidad > stockDisponible) {
-        inputCantidad.setCustomValidity(`Stock insuficiente. Máximo: ${stockDisponible}`);
-        inputCantidad.reportValidity();
-    } else {
-        inputCantidad.setCustomValidity('');
-    }
-}
 
-if (selectProducto) selectProducto.addEventListener('change', validarStock);
-if (inputCantidad) inputCantidad.addEventListener('input', validarStock);
-if (tipoMovimiento) tipoMovimiento.addEventListener('change', validarStock);
+    if (selectProducto.value) {
+      stockHint.textContent = 'Stock disponible: ' + stock;
+    } else {
+      stockHint.textContent = 'Selecciona un producto para ver el stock disponible.';
+    }
+
+    if (tipo === 'S' && cantidad > stock) {
+      inputCantidad.setCustomValidity('Stock insuficiente. Maximo: ' + stock);
+    } else {
+      inputCantidad.setCustomValidity('');
+    }
+  }
+
+  if (selectProducto) selectProducto.addEventListener('change', validarStock);
+  if (inputCantidad) inputCantidad.addEventListener('input', validarStock);
+  if (tipoMovimiento) tipoMovimiento.addEventListener('change', validarStock);
+  validarStock();
 </script>
 {% endblock %}

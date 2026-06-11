@@ -9,6 +9,7 @@ db.sqlite3
 # Entorno virtual
 env/
 venv/
+.venv/
 ENV/
 
 # Archivos de configuración local

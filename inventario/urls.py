@@ -9,7 +9,10 @@ urlpatterns = [
     path('editar/<int:producto_id>/', views.editar_producto, name='editar_producto'),
     path('historial/', views.historial_movimientos, name='historial_movimientos'),
     path('exportar/excel/', views.exportar_productos_excel, name='exportar_productos_excel'),
+    path('exportar/stock-bajo/', views.exportar_stock_bajo_excel, name='exportar_stock_bajo_excel'),
+    path('exportar/movimientos/', views.exportar_movimientos_excel, name='exportar_movimientos_excel'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('reposicion/', views.productos_reposicion, name='productos_reposicion'),
     path('cargar/', views.cargar_productos_excel, name='cargar_excel'),
     path('predecir/', views.predecir_stock, name='predecir_stock'),
     # Categorias

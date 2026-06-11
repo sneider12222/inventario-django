@@ -1,5 +1,5 @@
 from django import forms
-from .models import Categoria, Proveedor, Producto
+from .models import Categoria, MovimientoInventario, Proveedor, Producto
 
 
 class CategoriaForm(forms.ModelForm):
@@ -27,11 +27,32 @@ class ProveedorForm(forms.ModelForm):
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['nombre', 'categoria', 'stock', 'precio', 'vendedor']
+        fields = ['sku', 'nombre', 'categoria', 'stock_minimo', 'unidad', 'ubicacion_categoria', 'ubicacion', 'activo', 'precio', 'vendedor']
         widgets = {
+            'sku': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. PROD-001'}),
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
-            'stock': forms.NumberInput(attrs={'class': 'form-control'}),
+            'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'unidad': forms.Select(attrs={'class': 'form-select'}),
+            'ubicacion_categoria': forms.Select(attrs={'class': 'form-select'}),
+            'ubicacion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Estante 2, torre B, cajon 4'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'vendedor': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def clean_sku(self):
+        sku = self.cleaned_data.get('sku')
+        return sku.strip().upper() if sku else None
+
+
+class MovimientoForm(forms.ModelForm):
+    class Meta:
+        model = MovimientoInventario
+        fields = ['producto', 'cantidad', 'tipo', 'motivo']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'motivo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Compra, venta, ajuste, devolucion'}),
         }

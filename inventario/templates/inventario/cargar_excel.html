@@ -1,23 +1,169 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Carga Masiva{% endblock %}
+
+{% block title %}Carga masiva{% endblock %}
+{% block page_title %}Carga masiva{% endblock %}
+
+{% block extra_css %}
+  .upload-card, .preview-card {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    padding: 24px;
+  }
+  .form-label {
+    color: var(--ink3);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .file-input {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--font);
+    padding: 9px 12px;
+    width: 100%;
+  }
+  .help-text { color: var(--ink2); font-size: 12px; margin-top: 8px; }
+  .error-box {
+    background: var(--danger-light);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--radius);
+    color: var(--danger);
+    margin-bottom: 16px;
+    padding: 12px 14px;
+  }
+  .preview-table { border-collapse: collapse; min-width: 920px; width: 100%; }
+  .preview-table th {
+    background: var(--surf2);
+    color: var(--ink3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 9px 12px;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .preview-table td { border-top: 1px solid var(--border); font-size: 12px; padding: 9px 12px; }
+  .table-wrap { overflow-x: auto; }
+  .actions { display: flex; gap: 10px; margin-top: 16px; }
+{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">📥 Cargar Productos desde Excel o CSV</h2>
-
-<form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white">
+<section class="upload-card">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="mb-3">
-        <label class="form-label">Selecciona un archivo (.xlsx o .csv):</label>
-        <input type="file" name="archivo" accept=".xlsx,.csv" class="form-control" required>
+    <label class="form-label">Archivo .xlsx o .csv</label>
+    <input type="file" name="archivo" accept=".xlsx,.csv" class="file-input" required>
+    <div class="help-text">
+      Columnas recomendadas: sku, nombre, categoria, proveedor, stock, stock_minimo, precio, unidad, ubicacion_categoria, ubicacion, activo.
+      La columna obligatoria es nombre.
     </div>
-    <button type="submit" class="btn btn-primary">Subir Archivo</button>
-</form>
+    <div class="actions">
+      <button type="submit" class="btn-primary-custom">Validar archivo</button>
+    </div>
+  </form>
+</section>
 
-{% if messages %}
-    <div class="mt-3">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+{% if errores %}
+<div class="error-box">
+  {% for error in errores %}
+    <div>{{ error }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if advertencias %}
+<div class="error-box" style="background:var(--warn-light); border-left-color:var(--warn); color:#92400e;">
+  {% for warning in advertencias %}
+    <div>{{ warning }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if resumen %}
+<section class="preview-card">
+  <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Importacion completada</h3>
+  <p class="help-text">La carga ya se aplico. Estos son los resultados finales.</p>
+  <div class="table-wrap">
+    <table class="preview-table" style="min-width:520px;">
+      <thead>
+        <tr>
+          <th>Procesadas</th>
+          <th>Creadas</th>
+          <th>Actualizadas</th>
+          <th>Entradas iniciales</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ resumen.filas_procesadas }}</td>
+          <td>{{ resumen.creados }}</td>
+          <td>{{ resumen.actualizados }}</td>
+          <td>{{ resumen.stock_iniciales }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {% if resumen.advertencias %}
+  <div class="help-text" style="margin-top:10px;">Se generaron advertencias en algunas filas, pero no detuvieron la carga.</div>
+  {% endif %}
+  <div class="actions">
+    <a href="{% url 'lista_productos' %}" class="btn-primary-custom">Ir a productos</a>
+    <a href="{% url 'cargar_excel' %}" class="btn-ghost-custom">Nueva importacion</a>
+  </div>
+</section>
+{% endif %}
+
+{% if preview %}
+<section class="preview-card">
+  <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Vista previa</h3>
+  <p class="help-text">Se validaron {{ total_preview }} filas. Revisa la muestra antes de guardar.</p>
+  <div class="table-wrap">
+    <table class="preview-table">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Nombre</th>
+          <th>Categoria</th>
+          <th>Proveedor</th>
+          <th>Stock</th>
+          <th>Minimo</th>
+          <th>Precio</th>
+          <th>Unidad</th>
+          <th>Ubicacion categoria</th>
+          <th>Ubicacion</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in preview %}
+        <tr>
+          <td>{{ fila.sku|default:"" }}</td>
+          <td>{{ fila.nombre }}</td>
+          <td>{{ fila.categoria }}</td>
+          <td>{{ fila.proveedor }}</td>
+          <td>{{ fila.stock }}</td>
+          <td>{{ fila.stock_minimo }}</td>
+          <td>{{ fila.precio }}</td>
+          <td>{{ fila.unidad }}</td>
+          <td>{{ fila.ubicacion_categoria }}</td>
+          <td>{{ fila.ubicacion }}</td>
+        </tr>
         {% endfor %}
-    </div>
+      </tbody>
+    </table>
+  </div>
+  {% if not errores %}
+  <form method="post" class="actions">
+    {% csrf_token %}
+    <input type="hidden" name="archivo_guardado" value="{{ archivo_guardado }}">
+    <input type="hidden" name="confirmar" value="1">
+    <button type="submit" class="btn-primary-custom">Confirmar importacion</button>
+    <a href="{% url 'lista_productos' %}" class="btn-ghost-custom">Cancelar</a>
+  </form>
+  {% endif %}
+</section>
 {% endif %}
 {% endblock %}

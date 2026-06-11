@@ -1,0 +1,98 @@
+{% extends 'inventario/base.html' %}
+{% load inventario_extras %}
+
+{% block title %}Reposicion{% endblock %}
+{% block page_title %}Reposicion{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'exportar_stock_bajo_excel' %}?{% querystring %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </a>
+{% endblock %}
+
+{% block extra_css %}
+  .stats-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .stat-value { font-family: var(--mono); font-size: 24px; font-weight: 600; line-height: 1; }
+  .stat-label { color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-top: 6px; text-transform: uppercase; }
+  .table-wrap { overflow-x: auto; }
+  .data-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  .data-table th { background: var(--surf2); border-bottom: 1px solid var(--border); color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; text-transform: uppercase; }
+  .data-table td { border-bottom: 1px solid var(--border); font-size: 13px; padding: 12px 14px; }
+  .chip { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 700; padding: 3px 9px; white-space: nowrap; }
+  .chip-warn { background: var(--warn-light); color: var(--warn); }
+  .chip-danger { background: var(--danger-light); color: var(--danger); }
+  .empty { color: var(--ink2); padding: 28px 18px; text-align: center; }
+{% endblock %}
+
+{% block content %}
+<div class="stats-row">
+  <section class="stat-card">
+    <div class="stat-value">{{ total_reposicion }}</div>
+    <div class="stat-label">Productos en reposicion</div>
+  </section>
+  <section class="stat-card">
+    <div class="stat-value">{{ bajo_stock }}</div>
+    <div class="stat-label">Stock bajo</div>
+  </section>
+  <section class="stat-card">
+    <div class="stat-value">{{ sin_stock }}</div>
+    <div class="stat-label">Sin stock</div>
+  </section>
+</div>
+
+<div class="card-base table-wrap">
+  {% if productos %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>SKU</th>
+        <th>Categoria</th>
+        <th>Proveedor</th>
+        <th>Ubicacion</th>
+        <th>Stock</th>
+        <th>Minimo</th>
+        <th>Faltante sugerido</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for producto in productos %}
+      <tr>
+        <td><strong>{{ producto.nombre }}</strong></td>
+        <td>{{ producto.sku|default:"-" }}</td>
+        <td>{{ producto.categoria.nombre|default:"-" }}</td>
+        <td>{{ producto.vendedor.nombre|default:"-" }}</td>
+        <td>
+          {% if producto.ubicacion_categoria or producto.ubicacion %}
+            <div class="chip chip-warn">{% if producto.ubicacion_categoria %}{{ producto.get_ubicacion_categoria_display }}{% else %}Sin categoria{% endif %}</div>
+            <div style="margin-top:6px;">{{ producto.ubicacion|default:"Sin detalle" }}</div>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>{% if producto.sin_stock %}<span class="chip chip-danger">{{ producto.stock }}</span>{% else %}{{ producto.stock }}{% endif %}</td>
+        <td>{{ producto.stock_minimo }}</td>
+        <td>{{ producto.faltante_reposicion }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty">No hay productos que requieran reposicion.</div>
+  {% endif %}
+</div>
+
+{% if productos.paginator.num_pages > 1 %}
+<div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
+  {% if productos.has_previous %}
+    <a class="btn-ghost-custom" href="?{% querystring page=productos.previous_page_number %}">Anterior</a>
+  {% endif %}
+  <span class="btn-ghost-custom">Pagina {{ productos.number }} de {{ productos.paginator.num_pages }}</span>
+  {% if productos.has_next %}
+    <a class="btn-ghost-custom" href="?{% querystring page=productos.next_page_number %}">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

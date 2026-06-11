@@ -1,37 +1,113 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Historial de Movimientos{% endblock %}
+{% load inventario_extras %}
+
+{% block title %}Historial de movimientos{% endblock %}
+{% block page_title %}Historial de movimientos{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'exportar_movimientos_excel' %}?{% querystring %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </a>
+{% endblock %}
+
+{% block extra_css %}
+  .filters-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-control {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surf);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 7px 12px;
+  }
+  .table-wrap { overflow-x: auto; }
+  .data-table { width: 100%; border-collapse: collapse; min-width: 860px; }
+  .data-table th {
+    background: var(--surf2);
+    border-bottom: 1px solid var(--border);
+    color: var(--ink3);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 10px 14px;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .data-table td { border-bottom: 1px solid var(--border); font-size: 13px; padding: 12px 14px; }
+  .chip { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 700; padding: 3px 9px; }
+  .chip-in { background: var(--ok-light); color: var(--ok); }
+  .chip-out { background: var(--danger-light); color: var(--danger); }
+  .mono { font-family: var(--mono); }
+  .pagination-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .empty-state { color: var(--ink2); padding: 42px 20px; text-align: center; }
+{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">📜 Historial de Movimientos</h2>
+<form method="get" class="filters-bar">
+  <select name="producto" class="filter-control">
+    <option value="">Todos los productos</option>
+    {% for producto in productos %}
+      <option value="{{ producto.id }}" {% if filtro_producto == producto.id|stringformat:"s" %}selected{% endif %}>{{ producto.nombre }}</option>
+    {% endfor %}
+  </select>
+  <select name="tipo" class="filter-control">
+    <option value="">Entradas y salidas</option>
+    <option value="E" {% if filtro_tipo == 'E' %}selected{% endif %}>Entradas</option>
+    <option value="S" {% if filtro_tipo == 'S' %}selected{% endif %}>Salidas</option>
+  </select>
+  <input type="date" name="desde" value="{{ filtro_desde }}" class="filter-control">
+  <input type="date" name="hasta" value="{{ filtro_hasta }}" class="filter-control">
+  <button type="submit" class="btn-ghost-custom">Filtrar</button>
+</form>
 
-<table class="table table-bordered table-striped shadow-sm bg-white">
-    <thead class="table-dark">
-        <tr>
-            <th>Producto</th>
-            <th>Tipo</th>
-            <th>Cantidad</th>
-            <th>Fecha</th>
-        </tr>
+<div class="card-base table-wrap">
+  {% if movimientos %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Producto</th>
+        <th>Tipo</th>
+        <th>Cantidad</th>
+        <th>Usuario</th>
+        <th>Motivo</th>
+      </tr>
     </thead>
     <tbody>
-        {% for movimiento in movimientos %}
-        <tr>
-            <td>{{ movimiento.producto.nombre }}</td>
-            <td>
-                {% if movimiento.tipo == 'E' %}
-                    <span class="badge bg-success">Entrada</span>
-                {% else %}
-                    <span class="badge bg-danger">Salida</span>
-                {% endif %}
-            </td>
-            <td>{{ movimiento.cantidad }}</td>
-            <td>{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="4" class="text-center text-muted">No hay movimientos registrados</td>
-        </tr>
-        {% endfor %}
+      {% for movimiento in movimientos %}
+      <tr>
+        <td class="mono">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+        <td>{{ movimiento.producto.nombre }}</td>
+        <td>
+          {% if movimiento.tipo == 'E' %}
+            <span class="chip chip-in">Entrada</span>
+          {% else %}
+            <span class="chip chip-out">Salida</span>
+          {% endif %}
+        </td>
+        <td class="mono">{{ movimiento.cantidad }}</td>
+        <td>{{ movimiento.usuario.username|default:"-" }}</td>
+        <td>{{ movimiento.motivo|default:"-" }}</td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
+  {% else %}
+  <div class="empty-state">No hay movimientos con los filtros actuales.</div>
+  {% endif %}
+</div>
+
+{% if movimientos.paginator.num_pages > 1 %}
+<div class="pagination-row">
+  {% if movimientos.has_previous %}
+    <a class="btn-ghost-custom" href="?{% querystring page=movimientos.previous_page_number %}">Anterior</a>
+  {% endif %}
+  <span class="btn-ghost-custom">Pagina {{ movimientos.number }} de {{ movimientos.paginator.num_pages }}</span>
+  {% if movimientos.has_next %}
+    <a class="btn-ghost-custom" href="?{% querystring page=movimientos.next_page_number %}">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

@@ -1,28 +1,38 @@
 {% extends 'inventario/base.html' %}
+{% load inventario_extras %}
 
 {% block page_title %}Productos{% endblock %}
 
 {% block topbar_actions %}
-  <a href="{% url 'exportar_productos_excel' %}" class="btn-ghost-custom">
+  <a href="{% url 'exportar_productos_excel' %}?{% querystring %}" class="btn-ghost-custom">
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Exportar
   </a>
+  <a href="{% url 'exportar_stock_bajo_excel' %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m5 8 7 7 7-7"/><path d="M5 22h14"/></svg>
+    Reposicion
+  </a>
+  {% if puede_mover %}
+  <a href="{% url 'registrar_movimiento' %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    Movimiento
+  </a>
+  {% endif %}
+  {% if puede_editar %}
   <a href="{% url 'crear_producto' %}" class="btn-primary-custom">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Nuevo producto
   </a>
+  {% endif %}
 {% endblock %}
 
 {% block extra_css %}
-  .filters-bar {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 16px; flex-wrap: wrap;
-  }
+  .filters-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
   .search-input-wrap {
     display: flex; align-items: center; gap: 8px;
     background: var(--surf); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 7px 12px;
-    flex: 1; min-width: 200px; max-width: 320px;
+    flex: 1; min-width: 220px; max-width: 360px;
   }
   .search-input-wrap svg { width: 15px; height: 15px; stroke: var(--ink3); fill: none; stroke-width: 2; flex-shrink: 0; }
   .search-input-wrap input { border: none; background: transparent; font-size: 13px; font-family: var(--font); color: var(--ink); outline: none; width: 100%; }
@@ -31,157 +41,122 @@
     padding: 7px 12px; font-size: 13px; font-family: var(--font);
     background: var(--surf); color: var(--ink); cursor: pointer; outline: none;
   }
-  .filter-select:focus { border-color: var(--accent); }
-
-  .stats-row {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 12px; margin-bottom: 20px;
-  }
+  .stats-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
   .stat-card {
     background: var(--surf); border: 1px solid var(--border);
     border-radius: var(--radius-lg); padding: 16px 18px;
-    display: flex; align-items: center; gap: 12px;
   }
-  .stat-icon {
-    width: 36px; height: 36px; border-radius: 9px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .stat-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.75; }
-  .stat-icon.blue { background: var(--accent-light); color: var(--accent); }
-  .stat-icon.green { background: var(--ok-light); color: var(--ok); }
-  .stat-icon.warn { background: var(--warn-light); color: var(--warn); }
   .stat-value { font-size: 22px; font-weight: 700; font-family: var(--mono); line-height: 1; }
-  .stat-label { font-size: 11px; color: var(--ink3); margin-top: 3px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-
-  .data-table { width: 100%; border-collapse: collapse; }
+  .stat-label { font-size: 11px; color: var(--ink3); margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .table-wrap { overflow-x: auto; }
+  .data-table { width: 100%; border-collapse: collapse; min-width: 980px; }
   .data-table thead th {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--ink3);
-    padding: 10px 16px; background: var(--surf2);
+    padding: 10px 14px; background: var(--surf2);
     border-bottom: 1px solid var(--border); text-align: left;
     white-space: nowrap;
   }
-  .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-  .data-table tbody tr:last-child { border-bottom: none; }
-  .data-table tbody tr:hover { background: #fafbfc; }
-  .data-table tbody td { padding: 12px 16px; vertical-align: middle; }
-
-  .prod-name  { font-weight: 600; font-size: 13px; color: var(--ink); }
-  .prod-date  { font-size: 11px; font-family: var(--mono); color: var(--ink3); margin-top: 2px; }
-
+  .data-table tbody tr { border-bottom: 1px solid var(--border); }
+  .data-table tbody td { padding: 12px 14px; vertical-align: middle; font-size: 13px; }
+  .prod-name { font-weight: 700; color: var(--ink); }
+  .prod-meta { color: var(--ink3); font-size: 11px; font-family: var(--mono); margin-top: 2px; }
   .chip {
-    display: inline-flex; align-items: center;
-    padding: 3px 9px; border-radius: 20px;
-    font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
   }
-  .chip-blue   { background: #EFF6FF; color: #1D4ED8; }
-  .chip-green  { background: #F0FDF4; color: #15803D; }
-  .chip-purple { background: #F5F3FF; color: #6D28D9; }
-  .chip-amber  { background: #FFFBEB; color: #B45309; }
-  .chip-rose   { background: #FFF1F2; color: #BE123C; }
-  .chip-teal   { background: #F0FDFA; color: #0F766E; }
-  .chip-gray   { background: var(--surf3); color: var(--ink2); }
-
-  .price-cell { font-family: var(--mono); font-size: 13px; font-weight: 500; }
-
-  .stock-wrap { display: flex; align-items: center; gap: 8px; }
-  .stock-bar  { width: 52px; height: 4px; background: var(--surf3); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
-  .stock-fill { height: 100%; border-radius: 2px; }
-  .fill-ok   { background: var(--ok); }
-  .fill-warn { background: var(--warn); }
-  .fill-out  { background: var(--danger); }
-  .stock-num { font-family: var(--mono); font-size: 12px; font-weight: 500; }
-
+  .chip-blue { background: var(--accent-light); color: var(--accent); }
+  .chip-gray { background: var(--surf3); color: var(--ink2); }
+  .chip-ok { background: var(--ok-light); color: var(--ok); }
+  .chip-warn { background: var(--warn-light); color: var(--warn); }
+  .chip-danger { background: var(--danger-light); color: var(--danger); }
+  .price-cell, .stock-num { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
   .action-wrap { display: flex; align-items: center; gap: 4px; }
   .icon-btn {
     width: 30px; height: 30px; border-radius: 7px;
-    display: flex; align-items: center; justify-content: center;
+    display: inline-flex; align-items: center; justify-content: center;
     border: 1px solid transparent; background: transparent;
     cursor: pointer; text-decoration: none; transition: all 0.15s;
     color: var(--ink2);
   }
   .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.75; }
-  .icon-btn:hover { background: var(--surf3); border-color: var(--border); }
+  .icon-btn:hover { background: var(--surf3); border-color: var(--border); color: var(--ink); }
   .icon-btn.del:hover { background: var(--danger-light); border-color: rgba(185,28,28,0.15); color: var(--danger); }
-
-  .empty-state {
-    text-align: center; padding: 56px 24px;
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-  }
-  .empty-state svg { width: 48px; height: 48px; stroke: var(--ink3); fill: none; stroke-width: 1.25; }
-  .empty-title { font-size: 15px; font-weight: 600; color: var(--ink); }
-  .empty-sub   { font-size: 13px; color: var(--ink3); }
+  .pagination-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .empty-state { text-align: center; padding: 56px 24px; color: var(--ink2); }
+  @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .stats-row { grid-template-columns: 1fr; } }
 {% endblock %}
 
 {% block content %}
-
-<!-- Stats row -->
 <div class="stats-row">
-  <div class="stat-card">
-    <div class="stat-icon blue">
-      <svg viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-    </div>
-    <div>
-      <div class="stat-value">{{ productos.count }}</div>
-      <div class="stat-label">Total productos</div>
-    </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon green">
-      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    </div>
-    <div>
-      <div class="stat-value">{{ stock_total|default:0 }}</div>
-      <div class="stat-label">Stock total</div>
-    </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon warn">
-      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    </div>
-    <div>
-      <div class="stat-value">{{ bajo_stock|default:0 }}</div>
-      <div class="stat-label">Stock bajo (≤5)</div>
-    </div>
-  </div>
+  <section class="stat-card">
+    <div class="stat-value">{{ productos.paginator.count }}</div>
+    <div class="stat-label">Productos filtrados</div>
+  </section>
+  <section class="stat-card">
+    <div class="stat-value">{{ stock_total|default:0 }}</div>
+    <div class="stat-label">Stock total</div>
+  </section>
+  <section class="stat-card">
+    <div class="stat-value">{{ bajo_stock|default:0 }}</div>
+    <div class="stat-label">Stock bajo</div>
+  </section>
+  <section class="stat-card">
+    <div class="stat-value">{{ sin_stock|default:0 }}</div>
+    <div class="stat-label">Sin stock</div>
+  </section>
 </div>
 
-<!-- Filtros -->
 <form method="get" class="filters-bar">
   <div class="search-input-wrap">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar producto...">
+    <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nombre o SKU">
   </div>
   <select name="categoria" class="filter-select">
-    <option value="">Todas las categorías</option>
+    <option value="">Todas las categorias</option>
     {% for cat in categorias %}
-      <option value="{{ cat }}" {% if request.GET.categoria == cat|stringformat:"s" %}selected{% endif %}>
-        {{ cat }}
-      </option>
+      <option value="{{ cat.id }}" {% if filtro_categoria == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
     {% endfor %}
   </select>
   <select name="vendedor" class="filter-select">
     <option value="">Todos los proveedores</option>
     {% for prov in vendedores %}
-      <option value="{{ prov }}" {% if request.GET.vendedor == prov|stringformat:"s" %}selected{% endif %}>
-        {{ prov }}
-      </option>
+      <option value="{{ prov.id }}" {% if filtro_vendedor == prov.id|stringformat:"s" %}selected{% endif %}>{{ prov.nombre }}</option>
     {% endfor %}
+  </select>
+  <select name="estado" class="filter-select">
+    <option value="">Todos los estados</option>
+    <option value="disponible" {% if filtro_estado == 'disponible' %}selected{% endif %}>Disponible</option>
+    <option value="stock_bajo" {% if filtro_estado == 'stock_bajo' %}selected{% endif %}>Stock bajo</option>
+    <option value="sin_stock" {% if filtro_estado == 'sin_stock' %}selected{% endif %}>Sin stock</option>
+    <option value="activo" {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
+    <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+  </select>
+  <select name="orden" class="filter-select">
+    <option value="nombre" {% if orden == 'nombre' %}selected{% endif %}>Nombre A-Z</option>
+    <option value="-nombre" {% if orden == '-nombre' %}selected{% endif %}>Nombre Z-A</option>
+    <option value="stock" {% if orden == 'stock' %}selected{% endif %}>Menor stock</option>
+    <option value="-stock" {% if orden == '-stock' %}selected{% endif %}>Mayor stock</option>
+    <option value="-precio" {% if orden == '-precio' %}selected{% endif %}>Mayor precio</option>
+    <option value="-fecha" {% if orden == '-fecha' %}selected{% endif %}>Mas recientes</option>
   </select>
   <button type="submit" class="btn-ghost-custom">Filtrar</button>
 </form>
 
-<!-- Tabla -->
-<div class="card-base">
+<div class="card-base table-wrap">
   {% if productos %}
   <table class="data-table">
     <thead>
       <tr>
         <th>Producto</th>
-        <th>Categoría</th>
+        <th>Categoria</th>
         <th>Proveedor</th>
-        <th style="text-align:right">Precio</th>
+        <th>Ubicacion</th>
+        <th>Precio</th>
         <th>Stock</th>
+        <th>Estado</th>
         <th>Acciones</th>
       </tr>
     </thead>
@@ -190,50 +165,46 @@
       <tr>
         <td>
           <div class="prod-name">{{ producto.nombre }}</div>
-          <div class="prod-date">{{ producto.fecha_creacion|date:"d/m/Y" }}</div>
+          <div class="prod-meta">{{ producto.sku|default:"Sin SKU" }} · {{ producto.get_unidad_display }}</div>
         </td>
+        <td><span class="chip chip-blue">{{ producto.categoria.nombre|default:"Sin categoria" }}</span></td>
+        <td>{{ producto.vendedor.nombre|default:"Sin proveedor" }}</td>
         <td>
-          <span class="chip chip-blue">
-            {{ producto.categoria.nombre|default:"Sin categoría" }}
-          </span>
-        </td>
-        <td style="color:var(--ink2); font-size:13px">
-          {{ producto.vendedor.nombre|default:"Sin proveedor" }}
-        </td>
-        <td style="text-align:right">
-          <span class="price-cell">${{ producto.precio }}</span>
-        </td>
-        <td>
-          <div class="stock-wrap">
-            <div class="stock-bar">
-              {% if producto.stock == 0 %}
-                <div class="stock-fill fill-out" style="width:100%"></div>
-              {% elif producto.stock <= 5 %}
-                <div class="stock-fill fill-warn" style="width:30%"></div>
-              {% else %}
-                <div class="stock-fill fill-ok" style="width:75%"></div>
-              {% endif %}
-            </div>
-            <span class="stock-num 
-              {% if producto.stock == 0 %}
-                " style="color:var(--danger)">
-              {% elif producto.stock <= 5 %}
-                " style="color:var(--warn)">
-              {% else %}
-                ">
-              {% endif %}
-              {{ producto.stock }}
+          {% if producto.ubicacion_categoria or producto.ubicacion %}
+            <span class="chip chip-gray">
+              {% if producto.ubicacion_categoria %}{{ producto.get_ubicacion_categoria_display }}{% else %}Sin categoria{% endif %}
             </span>
-          </div>
+            <div class="prod-meta" style="margin-top:6px;">{{ producto.ubicacion|default:"Sin detalle" }}</div>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td><span class="price-cell">{{ producto.precio|cop }}</span></td>
+        <td><span class="stock-num">{{ producto.stock }} / min {{ producto.stock_minimo }}</span></td>
+        <td>
+          {% if producto.sin_stock %}
+            <span class="chip chip-danger">Sin stock</span>
+          {% elif producto.stock_bajo %}
+            <span class="chip chip-warn">Stock bajo</span>
+          {% else %}
+            <span class="chip chip-ok">Disponible</span>
+          {% endif %}
+          {% if not producto.activo %}
+            <span class="chip chip-gray">Inactivo</span>
+          {% endif %}
         </td>
         <td>
           <div class="action-wrap">
+            {% if puede_editar %}
             <a href="{% url 'editar_producto' producto.id %}" class="icon-btn" title="Editar">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </a>
             <a href="{% url 'eliminar_producto' producto.id %}" class="icon-btn del" title="Eliminar">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
             </a>
+            {% else %}
+            <span class="chip chip-gray">Solo lectura</span>
+            {% endif %}
           </div>
         </td>
       </tr>
@@ -241,16 +212,19 @@
     </tbody>
   </table>
   {% else %}
-  <div class="empty-state">
-    <svg viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-    <div class="empty-title">No hay productos registrados</div>
-    <div class="empty-sub">Crea el primer producto para comenzar</div>
-    <a href="{% url 'crear_producto' %}" class="btn-primary-custom" style="margin-top:4px">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Agregar producto
-    </a>
-  </div>
+  <div class="empty-state">No hay productos con los filtros actuales.</div>
   {% endif %}
 </div>
 
+{% if productos.paginator.num_pages > 1 %}
+<div class="pagination-row">
+  {% if productos.has_previous %}
+    <a class="btn-ghost-custom" href="?{% querystring page=productos.previous_page_number %}">Anterior</a>
+  {% endif %}
+  <span class="btn-ghost-custom">Pagina {{ productos.number }} de {{ productos.paginator.num_pages }}</span>
+  {% if productos.has_next %}
+    <a class="btn-ghost-custom" href="?{% querystring page=productos.next_page_number %}">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

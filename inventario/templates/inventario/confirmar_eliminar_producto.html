@@ -1,0 +1,41 @@
+{% extends 'inventario/base.html' %}
+
+{% block page_title %}Eliminar producto{% endblock %}
+
+{% block extra_css %}
+  .confirm-card {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    max-width: 560px;
+    padding: 24px;
+  }
+  .confirm-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .confirm-text { color: var(--ink2); margin-bottom: 20px; }
+  .confirm-actions { display: flex; gap: 10px; }
+  .btn-danger-custom {
+    background: var(--danger);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 14px;
+  }
+{% endblock %}
+
+{% block content %}
+<section class="confirm-card">
+  <div class="confirm-title">Eliminar {{ producto.nombre }}</div>
+  <div class="confirm-text">
+    Esta accion no se puede deshacer. Tambien se eliminaran sus movimientos asociados.
+  </div>
+  <form method="post" class="confirm-actions">
+    {% csrf_token %}
+    <button type="submit" class="btn-danger-custom">Eliminar producto</button>
+    <a href="{% url 'lista_productos' %}" class="btn-ghost-custom">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

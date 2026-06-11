@@ -1,72 +1,235 @@
 {% extends 'inventario/base.html' %}
+{% load inventario_extras %}
+
 {% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'exportar_stock_bajo_excel' %}" class="btn-ghost-custom">Exportar reposicion</a>
+{% endblock %}
+
+{% block extra_css %}
+  .dashboard-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .metric-card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; min-width: 0; }
+  .metric-label { color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .metric-value { color: var(--ink); font-family: var(--mono); font-size: 24px; font-weight: 600; line-height: 1.15; margin-top: 8px; overflow-wrap: anywhere; }
+  .metric-note { color: var(--ink2); font-size: 12px; margin-top: 5px; }
+  .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr); gap: 16px; }
+  .panel { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .panel-header { border-bottom: 1px solid var(--border); padding: 16px 18px; }
+  .panel-title { color: var(--ink); font-size: 15px; font-weight: 700; }
+  .panel-subtitle { color: var(--ink2); font-size: 12px; margin-top: 3px; }
+  .chart-body { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(180px, 260px); gap: 18px; padding: 20px; }
+  .chart-frame { height: 310px; min-width: 0; position: relative; }
+  .chart-frame canvas { display: block; height: 100% !important; width: 100% !important; }
+  .chart-legend { align-self: center; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .legend-item { align-items: center; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 9px; }
+  .legend-swatch { border-radius: 999px; height: 10px; width: 10px; }
+  .legend-name { color: var(--ink2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .legend-value { color: var(--ink); font-family: var(--mono); font-size: 12px; font-weight: 600; }
+  .list { display: flex; flex-direction: column; }
+  .list-row { border-bottom: 1px solid var(--border); display: grid; gap: 4px; padding: 12px 18px; }
+  .list-row:last-child { border-bottom: none; }
+  .row-main { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
+  .row-title { font-size: 13px; font-weight: 700; }
+  .row-meta { color: var(--ink2); font-size: 12px; }
+  .mono { font-family: var(--mono); }
+  .chip { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 700; padding: 3px 9px; white-space: nowrap; }
+  .chip-warn { background: var(--warn-light); color: var(--warn); }
+  .chip-danger { background: var(--danger-light); color: var(--danger); }
+  .chip-in { background: var(--ok-light); color: var(--ok); }
+  .chip-out { background: var(--danger-light); color: var(--danger); }
+  .empty { color: var(--ink2); padding: 28px 18px; text-align: center; }
+  .flow-panel { margin-top: 16px; }
+  @media (max-width: 1180px) {
+    .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .dashboard-grid, .chart-body { grid-template-columns: 1fr; }
+    .chart-frame { height: 280px; }
+  }
+{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">📊 Dashboard General</h2>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary shadow">
-            <div class="card-body text-center">
-                <h5>Total Productos</h5>
-                <p class="display-6">{{ total_productos }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success shadow">
-            <div class="card-body text-center">
-                <h5>Stock Total</h5>
-                <p class="display-6">{{ stock_total }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning shadow">
-            <div class="card-body text-center">
-                <h5>Stock Bajo</h5>
-                <p class="display-6">{{ bajo_stock }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-dark shadow">
-            <div class="card-body text-center">
-                <h5>Valor Inventario</h5>
-                <p class="display-6">${{ valor_total|floatformat:2 }}</p>
-            </div>
-        </div>
-    </div>
+<div class="dashboard-grid">
+  <section class="metric-card">
+    <div class="metric-label">Productos</div>
+    <div class="metric-value">{{ total_productos }}</div>
+    <div class="metric-note">Registrados</div>
+  </section>
+  <section class="metric-card">
+    <div class="metric-label">Stock total</div>
+    <div class="metric-value">{{ stock_total }}</div>
+    <div class="metric-note">Unidades disponibles</div>
+  </section>
+  <section class="metric-card">
+    <div class="metric-label">Stock bajo</div>
+    <div class="metric-value">{{ bajo_stock }}</div>
+    <div class="metric-note">Por debajo del minimo</div>
+  </section>
+  <section class="metric-card">
+    <div class="metric-label">Sin stock</div>
+    <div class="metric-value">{{ sin_stock }}</div>
+    <div class="metric-note">Requieren atencion</div>
+  </section>
+  <section class="metric-card">
+    <div class="metric-label">Valor inventario</div>
+    <div class="metric-value">{{ valor_total|cop }}</div>
+    <div class="metric-note">Estimado actual</div>
+  </section>
 </div>
 
-<div class="card shadow">
-    <div class="card-body">
-        <h5 class="card-title">📦 Distribución de Productos por Categoría</h5>
-        <canvas id="categoriaChart" height="120"></canvas>
+<div class="dashboard-layout">
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Distribucion por categoria</div>
+      <div class="panel-subtitle">Participacion de cada categoria dentro del inventario</div>
     </div>
+    {% if total_productos > 0 %}
+    <div class="chart-body">
+      <div class="chart-frame"><canvas id="categoriaChart"></canvas></div>
+      <div class="chart-legend" id="categoriaLegend"></div>
+    </div>
+    {% else %}
+    <div class="empty">No hay productos registrados aun.</div>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Requiere reposicion</div>
+      <div class="panel-subtitle">Productos en minimo, bajo minimo o sin stock</div>
+    </div>
+    <div class="list">
+      {% for producto in requiere_reposicion %}
+      <div class="list-row">
+        <div class="row-main">
+          <div class="row-title">{{ producto.nombre }}</div>
+          {% if producto.sin_stock %}
+            <span class="chip chip-danger">Sin stock</span>
+          {% else %}
+            <span class="chip chip-warn">Stock bajo</span>
+          {% endif %}
+        </div>
+        <div class="row-meta">
+          Stock {{ producto.stock }} · Minimo {{ producto.stock_minimo }} ·
+          {% if producto.ubicacion_categoria %}{{ producto.get_ubicacion_categoria_display }}{% else %}Sin categoria{% endif %}
+          · {{ producto.ubicacion|default:"Sin detalle" }}
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty">No hay productos pendientes de reposicion.</div>
+      {% endfor %}
+    </div>
+  </section>
 </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<section class="panel flow-panel">
+  <div class="panel-header">
+    <div class="panel-title">Entradas vs salidas recientes</div>
+    <div class="panel-subtitle">Movimiento acumulado de los ultimos 14 dias</div>
+  </div>
+  <div class="chart-body" style="grid-template-columns: 1fr;">
+    <div class="chart-frame"><canvas id="movimientosChart"></canvas></div>
+  </div>
+</section>
+
+<section class="panel flow-panel">
+  <div class="panel-header">
+    <div class="panel-title">Ultimos movimientos</div>
+    <div class="panel-subtitle">Actividad reciente del inventario</div>
+  </div>
+  <div class="list">
+    {% for movimiento in ultimos_movimientos %}
+    <div class="list-row">
+      <div class="row-main">
+        <div class="row-title">{{ movimiento.producto.nombre }}</div>
+        {% if movimiento.tipo == 'E' %}
+          <span class="chip chip-in">Entrada · {{ movimiento.cantidad }}</span>
+        {% else %}
+          <span class="chip chip-out">Salida · {{ movimiento.cantidad }}</span>
+        {% endif %}
+      </div>
+      <div class="row-meta">{{ movimiento.fecha|date:"d/m/Y H:i" }} · {{ movimiento.usuario.username|default:"Sin usuario" }} · {{ movimiento.motivo|default:"Sin motivo" }}</div>
+    </div>
+    {% empty %}
+    <div class="empty">Aun no hay movimientos registrados.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    const ctx = document.getElementById('categoriaChart').getContext('2d');
-    const categoriaChart = new Chart(ctx, {
-        type: 'pie',
+  (function() {
+    const labels = {{ labels|safe }};
+    const values = {{ data|safe }};
+    const colors = ['#1D4ED8', '#15803D', '#B45309', '#B91C1C', '#0E7490', '#7C3AED', '#4B5563', '#BE123C'];
+
+    const legend = document.getElementById('categoriaLegend');
+    if (legend) {
+      labels.forEach(function(label, index) {
+        const item = document.createElement('div');
+        const swatch = document.createElement('span');
+        const name = document.createElement('span');
+        const value = document.createElement('span');
+        item.className = 'legend-item';
+        swatch.className = 'legend-swatch';
+        swatch.style.background = colors[index % colors.length];
+        name.className = 'legend-name';
+        name.textContent = label;
+        value.className = 'legend-value';
+        value.textContent = values[index];
+        item.appendChild(swatch);
+        item.appendChild(name);
+        item.appendChild(value);
+        legend.appendChild(item);
+      });
+    }
+
+    const categoriaCanvas = document.getElementById('categoriaChart');
+    if (categoriaCanvas) {
+      new Chart(categoriaCanvas, {
+        type: 'doughnut',
         data: {
-            labels: {{ labels|safe }},
-            datasets: [{
-                label: 'Productos por categoría',
-                data: {{ data|safe }},
-                backgroundColor: [
-                    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2',
-                    '#6c757d', '#17a2b8', '#fd7e14'
-                ]
-            }]
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: labels.map(function(_, index) { return colors[index % colors.length]; }),
+            borderColor: '#FFFFFF',
+            borderWidth: 3,
+            hoverOffset: 8
+          }]
         },
         options: {
-            responsive: true
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: { legend: { display: false } }
         }
-    });
+      });
+    }
+
+    const movimientosCanvas = document.getElementById('movimientosChart');
+    if (movimientosCanvas) {
+      new Chart(movimientosCanvas, {
+        type: 'bar',
+        data: {
+          labels: {{ movimiento_labels|safe }},
+          datasets: [
+            { label: 'Entradas', data: {{ entradas_data|safe }}, backgroundColor: '#15803D', borderRadius: 6 },
+            { label: 'Salidas', data: {{ salidas_data|safe }}, backgroundColor: '#B91C1C', borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' } }, x: { grid: { display: false } } },
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+  })();
 </script>
 {% endblock %}
-    
