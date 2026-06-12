@@ -60,6 +60,16 @@
         {% if form.unidad.errors %}<ul class="errorlist">{% for e in form.unidad.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
       </div>
       <div class="form-group">
+        <label for="{{ form.lote.id_for_label }}">Lote</label>
+        {{ form.lote }}
+        {% if form.lote.errors %}<ul class="errorlist">{% for e in form.lote.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.fecha_vencimiento.id_for_label }}">Vencimiento</label>
+        {{ form.fecha_vencimiento }}
+        {% if form.fecha_vencimiento.errors %}<ul class="errorlist">{% for e in form.fecha_vencimiento.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group">
         <label for="{{ form.ubicacion_categoria.id_for_label }}">Categoria de ubicacion</label>
         {{ form.ubicacion_categoria }}
         {% if form.ubicacion_categoria.errors %}<ul class="errorlist">{% for e in form.ubicacion_categoria.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}

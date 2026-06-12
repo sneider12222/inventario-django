@@ -4,6 +4,13 @@
 {% block page_title %}Productos{% endblock %}
 
 {% block topbar_actions %}
+  {% if puede_editar %}
+  <a href="{% url 'cargar_excel' %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M4 17v3h16v-3"/></svg>
+    Importar
+  </a>
+  {% endif %}
+  <a href="{% url 'exportar_inventario_pdf' %}" class="btn-ghost-custom">PDF</a>
   <a href="{% url 'exportar_productos_excel' %}?{% querystring %}" class="btn-ghost-custom">
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Exportar
@@ -11,6 +18,10 @@
   <a href="{% url 'exportar_stock_bajo_excel' %}" class="btn-ghost-custom">
     <svg viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m5 8 7 7 7-7"/><path d="M5 22h14"/></svg>
     Reposicion
+  </a>
+  <a href="{% url 'reportes_inventario' %}" class="btn-ghost-custom">
+    <svg viewBox="0 0 24 24"><path d="M4 19.5V4"/><path d="M4 19h17"/><path d="M8 16V9"/><path d="M12 16V6"/><path d="M16 16v-4"/></svg>
+    Reportes
   </a>
   {% if puede_mover %}
   <a href="{% url 'registrar_movimiento' %}" class="btn-ghost-custom">
@@ -126,11 +137,18 @@
       <option value="{{ prov.id }}" {% if filtro_vendedor == prov.id|stringformat:"s" %}selected{% endif %}>{{ prov.nombre }}</option>
     {% endfor %}
   </select>
+  <select name="ubicacion" class="filter-select">
+    <option value="">Todas las ubicaciones</option>
+    {% for value,label in ubicaciones %}
+      <option value="{{ value }}" {% if filtro_ubicacion == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
   <select name="estado" class="filter-select">
     <option value="">Todos los estados</option>
     <option value="disponible" {% if filtro_estado == 'disponible' %}selected{% endif %}>Disponible</option>
     <option value="stock_bajo" {% if filtro_estado == 'stock_bajo' %}selected{% endif %}>Stock bajo</option>
     <option value="sin_stock" {% if filtro_estado == 'sin_stock' %}selected{% endif %}>Sin stock</option>
+    <option value="vence_pronto" {% if filtro_estado == 'vence_pronto' %}selected{% endif %}>Vence pronto</option>
     <option value="activo" {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
     <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
   </select>
@@ -154,6 +172,8 @@
         <th>Categoria</th>
         <th>Proveedor</th>
         <th>Ubicacion</th>
+        <th>Lote</th>
+        <th>Vence</th>
         <th>Precio</th>
         <th>Stock</th>
         <th>Estado</th>
@@ -179,6 +199,14 @@
             -
           {% endif %}
         </td>
+        <td>{{ producto.lote|default:"-" }}</td>
+        <td>
+          {% if producto.fecha_vencimiento %}
+            <span class="{% if producto.vence_pronto %}chip chip-warn{% else %}prod-meta{% endif %}">{{ producto.fecha_vencimiento|date:"d/m/Y" }}</span>
+          {% else %}
+            -
+          {% endif %}
+        </td>
         <td><span class="price-cell">{{ producto.precio|cop }}</span></td>
         <td><span class="stock-num">{{ producto.stock }} / min {{ producto.stock_minimo }}</span></td>
         <td>
@@ -195,6 +223,9 @@
         </td>
         <td>
           <div class="action-wrap">
+            <a href="{% url 'detalle_producto' producto.id %}" class="icon-btn" title="Ver detalle">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </a>
             {% if puede_editar %}
             <a href="{% url 'editar_producto' producto.id %}" class="icon-btn" title="Editar">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

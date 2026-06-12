@@ -1,0 +1,48 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Traslado de ubicacion{% endblock %}
+{% block page_title %}Traslado de ubicacion{% endblock %}
+
+{% block extra_css %}
+  .form-card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); max-width: 760px; padding: 28px 32px; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { color: var(--ink3); display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 6px; text-transform: uppercase; }
+  .form-group input, .form-group select { border: 1px solid var(--border); border-radius: var(--radius); color: var(--ink); font-family: var(--font); font-size: 13px; padding: 9px 12px; width: 100%; }
+  .errorlist { color: var(--danger); font-size: 12px; list-style: none; margin: 4px 0 0; padding: 0; }
+  .form-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .helper { color: var(--ink2); font-size: 12px; margin-bottom: 16px; }
+  @media (max-width: 760px) { .form-grid { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block content %}
+<section class="form-card">
+  <div class="helper">
+    Producto: <strong>{{ producto.nombre }}</strong> · Ubicacion actual: {{ producto.ubicacion_completa|default:"Sin ubicacion" }}
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="{{ form.ubicacion_categoria.id_for_label }}">Categoria destino</label>
+        {{ form.ubicacion_categoria }}
+        {% if form.ubicacion_categoria.errors %}<ul class="errorlist">{% for e in form.ubicacion_categoria.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.ubicacion.id_for_label }}">Detalle destino</label>
+        {{ form.ubicacion }}
+        {% if form.ubicacion.errors %}<ul class="errorlist">{% for e in form.ubicacion.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-group full">
+        <label for="{{ form.motivo.id_for_label }}">Motivo</label>
+        {{ form.motivo }}
+        {% if form.motivo.errors %}<ul class="errorlist">{% for e in form.motivo.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary-custom">Guardar traslado</button>
+      <a href="{% url 'detalle_producto' producto.id %}" class="btn-ghost-custom">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

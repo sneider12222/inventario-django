@@ -259,17 +259,19 @@
             <div class="nav-section">
                 <div class="nav-section-label">Principal</div>
                 
-                <a href="{% url 'dashboard' %}" 
+                <a href="{% url 'dashboard' %}"
                    class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                     Dashboard
                 </a>
 
+                {% if puede_operar_movimientos %}
                 <a href="{% url 'productos_reposicion' %}"
                    class="nav-link {% if request.resolver_match.url_name == 'productos_reposicion' %}active{% endif %}">
                     <svg viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m5 8 7 7 7-7"/><path d="M5 22h14"/></svg>
                     Reposicion
                 </a>
+                {% endif %}
 
                 <a href="{% url 'lista_productos' %}"
                    class="nav-link {% if request.resolver_match.url_name == 'lista_productos' %}active{% endif %}">
@@ -277,6 +279,7 @@
                     Productos
                 </a>
 
+                {% if puede_operar_movimientos %}
                 <a href="{% url 'registrar_movimiento' %}"
                    class="nav-link {% if request.resolver_match.url_name == 'registrar_movimiento' %}active{% endif %}">
                     <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
@@ -288,9 +291,11 @@
                     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 2 5-6"/></svg>
                     Historial
                 </a>
+                {% endif %}
             </div>
 
             <div class="nav-section">
+                {% if puede_gestionar_catalogos %}
                 <div class="nav-section-label">Catálogos</div>
 
                 <a href="{% url 'lista_categorias' %}"
@@ -316,6 +321,23 @@
                     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
                     Importar
                 </a>
+                {% endif %}
+
+                {% if puede_ver_inventario %}
+                <a href="{% url 'reportes_inventario' %}"
+                   class="nav-link {% if request.resolver_match.url_name == 'reportes_inventario' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24"><path d="M4 19.5V4"/><path d="M4 19h17"/><path d="M8 16V9"/><path d="M12 16V6"/><path d="M16 16v-4"/></svg>
+                    Reportes
+                </a>
+                {% endif %}
+
+                {% if puede_administrar_usuarios %}
+                <a href="{% url 'lista_usuarios' %}"
+                   class="nav-link {% if request.resolver_match.url_name == 'lista_usuarios' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Usuarios
+                </a>
+                {% endif %}
             </div>
 
             <div class="nav-section">
@@ -341,10 +363,10 @@
                     <div class="user-role">
                         {% if request.user.is_superuser %}
                             Administrador
-                        {% elif request.user.groups.all %}
-                            {{ request.user.groups.all.0.name }}
                         {% else %}
-                            Usuario
+                            {% with request.user.groups.first as primary_group %}
+                                {% if primary_group %}{{ primary_group.name }}{% else %}Usuario{% endif %}
+                            {% endwith %}
                         {% endif %}
                     </div>
                 </div>

@@ -1,9 +1,9 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import MovimientoInventario, Producto
+from .models import AuditoriaCambio, MovimientoInventario, Producto
 
 
 class InventarioFlowTests(TestCase):
@@ -101,6 +101,8 @@ class InventarioFlowTests(TestCase):
         self.assertEqual(producto.stock, 6)
         self.assertEqual(producto.stock_minimo, 2)
         self.assertEqual(MovimientoInventario.objects.filter(producto=producto, tipo='E').count(), 1)
+        self.assertTrue(AuditoriaCambio.objects.filter(modelo='Producto', metadata__producto_id=producto.id, accion='importar').exists())
+        self.assertTrue(AuditoriaCambio.objects.filter(modelo='MovimientoInventario', metadata__producto_id=producto.id, accion='movimiento_importacion').exists())
 
     def test_impide_borrar_producto_con_movimientos(self):
         producto = Producto.objects.create(nombre='Con historial', stock=3, stock_minimo=1)
@@ -131,3 +133,59 @@ class InventarioFlowTests(TestCase):
 
         self.assertEqual(preview.status_code, 200)
         self.assertContains(preview, 'SKU duplicado dentro del archivo')
+
+    def test_boton_importar_visible_en_productos(self):
+        response = self.client.get(reverse('lista_productos'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Importar')
+        self.assertContains(response, reverse('cargar_excel'))
+
+    def test_trasladar_ubicacion_actualiza_producto(self):
+        producto = Producto.objects.create(nombre='Traslado', stock=5, stock_minimo=1, ubicacion_categoria='bodega', ubicacion='A1')
+
+        response = self.client.post(reverse('trasladar_ubicacion', args=[producto.id]), {
+            'ubicacion_categoria': 'mostrador',
+            'ubicacion': 'Caja frontal',
+            'motivo': 'Reubicacion',
+        })
+
+        self.assertRedirects(response, reverse('detalle_producto', args=[producto.id]))
+        producto.refresh_from_db()
+        self.assertEqual(producto.ubicacion_categoria, 'mostrador')
+        self.assertEqual(producto.ubicacion, 'Caja frontal')
+
+    def test_exportar_pdf_inventario_responde_pdf(self):
+        Producto.objects.create(nombre='PDF test', stock=2, stock_minimo=1)
+
+        response = self.client.get(reverse('exportar_inventario_pdf'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_admin_puede_crear_usuario_con_rol(self):
+        response = self.client.post(reverse('crear_usuario'), {
+            'username': 'operador1',
+            'first_name': 'Op',
+            'last_name': 'Uno',
+            'email': 'op@example.com',
+            'password1': 'Pass12345!',
+            'password2': 'Pass12345!',
+            'is_active': 'on',
+            'rol': 'Operador',
+        })
+
+        self.assertRedirects(response, reverse('lista_usuarios'))
+        usuario = User.objects.get(username='operador1')
+        self.assertTrue(usuario.groups.filter(name='Operador').exists())
+
+    def test_usuario_consulta_no_puede_entrar_a_funciones_admin(self):
+        consulta = User.objects.create_user(username='consulta', password='pass12345')
+        consulta.groups.add(Group.objects.get(name='Consulta'))
+        consulta.is_superuser = True
+        consulta.save(update_fields=['is_superuser'])
+
+        self.client.force_login(consulta)
+        response = self.client.get(reverse('crear_producto'))
+
+        self.assertEqual(response.status_code, 302)

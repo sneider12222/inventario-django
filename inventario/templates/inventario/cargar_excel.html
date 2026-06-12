@@ -58,7 +58,7 @@
     <label class="form-label">Archivo .xlsx o .csv</label>
     <input type="file" name="archivo" accept=".xlsx,.csv" class="file-input" required>
     <div class="help-text">
-      Columnas recomendadas: sku, nombre, categoria, proveedor, stock, stock_minimo, precio, unidad, ubicacion_categoria, ubicacion, activo.
+      Columnas recomendadas: sku, nombre, categoria, proveedor, stock, stock_minimo, precio, unidad, lote, fecha_vencimiento, ubicacion_categoria, ubicacion, activo.
       La columna obligatoria es nombre.
     </div>
     <div class="actions">
@@ -133,6 +133,8 @@
           <th>Minimo</th>
           <th>Precio</th>
           <th>Unidad</th>
+          <th>Lote</th>
+          <th>Vence</th>
           <th>Ubicacion categoria</th>
           <th>Ubicacion</th>
         </tr>
@@ -148,6 +150,8 @@
           <td>{{ fila.stock_minimo }}</td>
           <td>{{ fila.precio }}</td>
           <td>{{ fila.unidad }}</td>
+          <td>{{ fila.lote }}</td>
+          <td>{{ fila.fecha_vencimiento|default:"" }}</td>
           <td>{{ fila.ubicacion_categoria }}</td>
           <td>{{ fila.ubicacion }}</td>
         </tr>

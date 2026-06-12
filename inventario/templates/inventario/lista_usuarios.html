@@ -1,0 +1,58 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Usuarios{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'crear_usuario' %}" class="btn-primary-custom">Nuevo usuario</a>
+{% endblock %}
+
+{% block extra_css %}
+  .table-wrap { overflow-x: auto; }
+  .table { width: 100%; min-width: 840px; border-collapse: collapse; }
+  .table th, .table td { border-bottom: 1px solid var(--border); font-size: 13px; padding: 12px 14px; text-align: left; }
+  .table th { background: var(--surf2); color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .chip { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 700; padding: 3px 9px; white-space: nowrap; }
+  .chip-gray { background: var(--surf3); color: var(--ink2); }
+  .actions { display: flex; gap: 8px; }
+{% endblock %}
+
+{% block content %}
+<div class="card-base table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for usuario in usuarios %}
+      <tr>
+        <td>{{ usuario.username }}</td>
+        <td>{{ usuario.get_full_name|default:"-" }}</td>
+        <td>{{ usuario.email|default:"-" }}</td>
+        <td>
+          {% with rol=usuario.groups.first %}
+            <span class="chip chip-gray">{% if rol %}{{ rol.name }}{% else %}Sin rol{% endif %}</span>
+          {% endwith %}
+        </td>
+        <td>{% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}</td>
+        <td>
+          <div class="actions">
+            <a href="{% url 'editar_usuario' usuario.id %}" class="btn-ghost-custom">Editar</a>
+            {% if usuario != request.user %}
+              <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn-ghost-custom">Eliminar</a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

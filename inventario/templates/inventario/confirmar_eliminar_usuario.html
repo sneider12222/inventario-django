@@ -1,0 +1,16 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Eliminar usuario{% endblock %}
+{% block page_title %}Eliminar usuario{% endblock %}
+
+{% block content %}
+<section class="card-base" style="max-width:720px; padding:24px;">
+  <h3 style="font-size:18px; font-weight:700; margin-bottom:8px;">Eliminar usuario</h3>
+  <p style="color:var(--ink2); margin-bottom:18px;">Vas a eliminar a <strong>{{ usuario.username }}</strong>. Esta accion no se puede deshacer.</p>
+  <form method="post" style="display:flex; gap:10px;">
+    {% csrf_token %}
+    <button type="submit" class="btn-primary-custom">Eliminar</button>
+    <a href="{% url 'lista_usuarios' %}" class="btn-ghost-custom">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

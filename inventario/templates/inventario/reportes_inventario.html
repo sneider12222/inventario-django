@@ -1,0 +1,108 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Reportes{% endblock %}
+{% block page_title %}Reportes{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'exportar_inventario_pdf' %}" class="btn-ghost-custom">PDF inventario</a>
+{% endblock %}
+
+{% block extra_css %}
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .value { font-family: var(--mono); font-size: 24px; font-weight: 700; }
+  .label { color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-top: 6px; text-transform: uppercase; }
+  .layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .panel { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .panel-header { border-bottom: 1px solid var(--border); padding: 16px 18px; }
+  .panel-title { font-size: 15px; font-weight: 700; }
+  .panel-subtitle { color: var(--ink2); font-size: 12px; margin-top: 3px; }
+  .table-wrap { overflow-x: auto; }
+  .table { width: 100%; min-width: 620px; border-collapse: collapse; }
+  .table th, .table td { border-bottom: 1px solid var(--border); font-size: 13px; padding: 11px 14px; text-align: left; }
+  .table th { background: var(--surf2); color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .empty { color: var(--ink2); padding: 28px 18px; text-align: center; }
+  @media (max-width: 1100px) { .grid, .layout { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 760px) { .grid, .layout { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block content %}
+<div class="grid">
+  <section class="card"><div class="value">{{ total_productos }}</div><div class="label">Productos</div></section>
+  <section class="card"><div class="value">{{ stock_total }}</div><div class="label">Stock total</div></section>
+  <section class="card"><div class="value">{{ bajo_stock }}</div><div class="label">Stock bajo</div></section>
+  <section class="card"><div class="value">{{ vence_pronto }}</div><div class="label">Vence pronto</div></section>
+</div>
+
+<div class="layout">
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Por ubicacion</div>
+      <div class="panel-subtitle">Distribucion operativa del inventario</div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Ubicacion</th><th>Productos</th><th>Stock</th><th>Valor</th></tr></thead>
+        <tbody>
+          {% for row in por_ubicacion %}
+          <tr><td>{{ row.label }}</td><td>{{ row.cantidad }}</td><td>{{ row.stock }}</td><td>{{ row.valor|floatformat:0 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Por categoria</div>
+      <div class="panel-subtitle">Categorias con mayor peso en stock y valor</div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Categoria</th><th>Productos</th><th>Stock</th><th>Valor</th></tr></thead>
+        <tbody>
+          {% for row in por_categoria|slice:":10" %}
+          <tr><td>{{ row.label }}</td><td>{{ row.cantidad }}</td><td>{{ row.stock }}</td><td>{{ row.valor|floatformat:0 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Por proveedor</div>
+      <div class="panel-subtitle">Quien surte mas inventario</div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Proveedor</th><th>Productos</th><th>Stock</th><th>Valor</th></tr></thead>
+        <tbody>
+          {% for row in por_proveedor|slice:":10" %}
+          <tr><td>{{ row.label }}</td><td>{{ row.cantidad }}</td><td>{{ row.stock }}</td><td>{{ row.valor|floatformat:0 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Productos por vencer</div>
+      <div class="panel-subtitle">Productos con vencimiento en 30 dias o menos</div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Producto</th><th>Lote</th><th>Vence</th><th>Ubicacion</th></tr></thead>
+        <tbody>
+          {% for producto in productos_por_vencer|slice:":10" %}
+          <tr><td>{{ producto.nombre }}</td><td>{{ producto.lote|default:"-" }}</td><td>{{ producto.fecha_vencimiento|date:"d/m/Y" }}</td><td>{{ producto.ubicacion_completa|default:"-" }}</td></tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty">No hay productos por vencer.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

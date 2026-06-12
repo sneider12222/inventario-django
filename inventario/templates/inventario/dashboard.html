@@ -5,6 +5,7 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block topbar_actions %}
+  <a href="{% url 'exportar_inventario_pdf' %}" class="btn-ghost-custom">PDF inventario</a>
   <a href="{% url 'exportar_stock_bajo_excel' %}" class="btn-ghost-custom">Exportar reposicion</a>
 {% endblock %}
 
@@ -72,6 +73,11 @@
     <div class="metric-label">Sin stock</div>
     <div class="metric-value">{{ sin_stock }}</div>
     <div class="metric-note">Requieren atencion</div>
+  </section>
+  <section class="metric-card">
+    <div class="metric-label">Vence pronto</div>
+    <div class="metric-value">{{ vence_pronto }}</div>
+    <div class="metric-note">Hasta 30 dias</div>
   </section>
   <section class="metric-card">
     <div class="metric-label">Valor inventario</div>
@@ -155,6 +161,26 @@
     </div>
     {% empty %}
     <div class="empty">Aun no hay movimientos registrados.</div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel flow-panel">
+  <div class="panel-header">
+    <div class="panel-title">Ultimos traslados</div>
+    <div class="panel-subtitle">Cambios recientes de ubicacion</div>
+  </div>
+  <div class="list">
+    {% for traslado in ultimas_transferencias %}
+    <div class="list-row">
+      <div class="row-main">
+        <div class="row-title">{{ traslado.producto.nombre }}</div>
+        <span class="chip chip-warn">Traslado</span>
+      </div>
+      <div class="row-meta">{{ traslado.fecha|date:"d/m/Y H:i" }} · {{ traslado.usuario.username|default:"Sin usuario" }} · {{ traslado.ubicacion_origen|default:"Sin origen" }} → {{ traslado.ubicacion_destino|default:"Sin destino" }}</div>
+    </div>
+    {% empty %}
+    <div class="empty">Aun no hay traslados registrados.</div>
     {% endfor %}
   </div>
 </section>

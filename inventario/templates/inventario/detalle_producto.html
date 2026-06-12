@@ -1,13 +1,117 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Detalle Producto{% endblock %}
+{% load inventario_extras %}
+{% block title %}Detalle de producto{% endblock %}
+{% block page_title %}Detalle de producto{% endblock %}
+
+{% block extra_css %}
+  .detail-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr); gap: 16px; }
+  .panel { background: var(--surf); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .panel-header { border-bottom: 1px solid var(--border); padding: 16px 18px; }
+  .panel-title { font-size: 15px; font-weight: 700; }
+  .panel-subtitle { color: var(--ink2); font-size: 12px; margin-top: 3px; }
+  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 18px; }
+  .info-item { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .info-label { color: var(--ink3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .info-value { margin-top: 5px; font-weight: 700; overflow-wrap: anywhere; }
+  .list-row { border-bottom: 1px solid var(--border); padding: 12px 18px; }
+  .list-row:last-child { border-bottom: none; }
+  .row-main { display: flex; justify-content: space-between; gap: 10px; }
+  .row-title { font-size: 13px; font-weight: 700; }
+  .row-meta { color: var(--ink2); font-size: 12px; }
+  .chip { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 700; padding: 3px 9px; white-space: nowrap; }
+  .chip-in { background: var(--ok-light); color: var(--ok); }
+  .chip-out { background: var(--danger-light); color: var(--danger); }
+  .chip-warn { background: var(--warn-light); color: var(--warn); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .empty { color: var(--ink2); padding: 24px 18px; text-align: center; }
+  @media (max-width: 980px) { .detail-grid { grid-template-columns: 1fr; } .info-grid { grid-template-columns: 1fr; } }
+{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Detalle: {{ producto.nombre }}</h2>
-<div class="card p-3 mb-3">
-    <p><strong>Categoría:</strong> {{ producto.categoria.nombre|default:"Sin categoría" }}</p>
-    <p><strong>Vendedor:</strong> {{ producto.vendedor.nombre|default:"Sin proveedor" }}</p>
-    <p><strong>Stock:</strong> {{ producto.stock }}</p>
-    <p><strong>Precio:</strong> ${{ producto.precio }}</p>
-    <p><strong>Fecha creación:</strong> {{ producto.fecha_creacion|date:"d/m/Y H:i" }}</p>
+<div class="detail-grid">
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">{{ producto.nombre }}</div>
+      <div class="panel-subtitle">{{ producto.sku|default:"Sin SKU" }} · {{ producto.get_unidad_display }}</div>
+    </div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Categoria</div>
+        <div class="info-value">{{ producto.categoria.nombre|default:"Sin categoria" }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Proveedor</div>
+        <div class="info-value">{{ producto.vendedor.nombre|default:"Sin proveedor" }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Stock</div>
+        <div class="info-value">{{ producto.stock }} / minimo {{ producto.stock_minimo }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Precio</div>
+        <div class="info-value">{{ producto.precio|cop }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Ubicacion</div>
+        <div class="info-value">{{ producto.ubicacion_completa|default:"Sin ubicacion" }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Lote y vencimiento</div>
+        <div class="info-value">
+          {{ producto.lote|default:"Sin lote" }}
+          {% if producto.fecha_vencimiento %}<br>{{ producto.fecha_vencimiento|date:"d/m/Y" }}{% else %}<br>Sin vencimiento{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="actions" style="padding: 0 18px 18px;">
+      {% if user.is_authenticated %}
+      <a href="{% url 'trasladar_ubicacion' producto.id %}" class="btn-ghost-custom">Trasladar ubicacion</a>
+      {% endif %}
+      {% if user.is_superuser %}
+      <a href="{% url 'editar_producto' producto.id %}" class="btn-ghost-custom">Editar</a>
+      {% endif %}
+      <a href="{% url 'lista_productos' %}" class="btn-ghost-custom">Volver</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Acciones recientes</div>
+      <div class="panel-subtitle">Movimientos, traslados y auditoria</div>
+    </div>
+    <div class="list">
+      {% for movimiento in movimientos %}
+      <div class="list-row">
+        <div class="row-main">
+          <div class="row-title">{{ movimiento.get_tipo_display }}</div>
+          <span class="chip {% if movimiento.tipo == 'E' %}chip-in{% else %}chip-out{% endif %}">{{ movimiento.cantidad }}</span>
+        </div>
+        <div class="row-meta">{{ movimiento.fecha|date:"d/m/Y H:i" }} · {{ movimiento.usuario.username|default:"Sin usuario" }} · {{ movimiento.motivo|default:"Sin motivo" }}</div>
+      </div>
+      {% empty %}
+      <div class="empty">Aun no hay movimientos.</div>
+      {% endfor %}
+
+      {% for traslado in transferencias %}
+      <div class="list-row">
+        <div class="row-main">
+          <div class="row-title">Traslado</div>
+          <span class="chip chip-warn">Ubicacion</span>
+        </div>
+        <div class="row-meta">{{ traslado.fecha|date:"d/m/Y H:i" }} · {{ traslado.usuario.username|default:"Sin usuario" }} · {{ traslado.motivo|default:"Sin motivo" }}</div>
+      </div>
+      {% endfor %}
+
+      {% for audit in auditorias %}
+      <div class="list-row">
+        <div class="row-main">
+          <div class="row-title">{{ audit.accion }}</div>
+          <span class="chip chip-warn">{{ audit.modelo }}</span>
+        </div>
+        <div class="row-meta">{{ audit.fecha|date:"d/m/Y H:i" }} · {{ audit.usuario.username|default:"Sin usuario" }} · {{ audit.detalle|default:"-" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
 </div>
-<a href="{% url 'lista_productos' %}" class="btn btn-secondary">Volver</a>
 {% endblock %}

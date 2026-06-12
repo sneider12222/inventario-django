@@ -1,11 +1,33 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Predicción de Inventario{% endblock %}
+{% block title %}Prediccion de Inventario{% endblock %}
 {% block content %}
-<h2 class="mb-4">📈 Predicción de Inventario</h2>
+<h2 class="mb-4">Prediccion de Inventario</h2>
 
 {% if mensaje %}
     <div class="alert alert-warning">{{ mensaje }}</div>
 {% else %}
-    <img src="data:image/png;base64,{{ grafico }}" class="img-fluid border shadow">
+    {% if resumen %}
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card p-3">
+                <div class="text-muted small">Stock acumulado actual</div>
+                <strong>{{ resumen.ultimo_stock_acumulado }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3">
+                <div class="text-muted small">Proyeccion 15 dias</div>
+                <strong>{{ resumen.proyeccion_15_dias }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3">
+                <div class="text-muted small">Pendiente diaria</div>
+                <strong>{{ resumen.pendiente_diaria }}</strong>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <img src="data:image/svg+xml;base64,{{ grafico }}" class="img-fluid border shadow" alt="Prediccion de inventario">
 {% endif %}
 {% endblock %}

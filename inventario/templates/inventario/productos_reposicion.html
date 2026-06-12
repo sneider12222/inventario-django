@@ -52,6 +52,8 @@
         <th>Categoria</th>
         <th>Proveedor</th>
         <th>Ubicacion</th>
+        <th>Lote</th>
+        <th>Vence</th>
         <th>Stock</th>
         <th>Minimo</th>
         <th>Faltante sugerido</th>
@@ -72,6 +74,8 @@
             -
           {% endif %}
         </td>
+        <td>{{ producto.lote|default:"-" }}</td>
+        <td>{% if producto.fecha_vencimiento %}{{ producto.fecha_vencimiento|date:"d/m/Y" }}{% else %}-{% endif %}</td>
         <td>{% if producto.sin_stock %}<span class="chip chip-danger">{{ producto.stock }}</span>{% else %}{{ producto.stock }}{% endif %}</td>
         <td>{{ producto.stock_minimo }}</td>
         <td>{{ producto.faltante_reposicion }}</td>
