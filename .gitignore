@@ -22,3 +22,6 @@ ENV/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Dependencias de Node
+node_modules/
